@@ -1,0 +1,120 @@
+spring:
+  application:
+    name: factuec-api
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:local}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        format_sql: true
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 25MB
+
+server:
+  port: ${SERVER_PORT:8080}
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+  api-docs:
+    path: /v3/api-docs
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+factuec:
+  jwt:
+    access-token-ttl: ${JWT_ACCESS_TTL:PT30M}
+    refresh-token-ttl: ${JWT_REFRESH_TTL:P7D}
+  sri:
+    ambiente-default: ${SRI_AMBIENTE_DEFAULT:PRUEBAS}
+    recepcion-pruebas-url: ${SRI_RECEPCION_PRUEBAS_URL:https://celcer.sri.gob.ec/comprobantes-electronicos-ws/RecepcionComprobantesOffline?wsdl}
+    autorizacion-pruebas-url: ${SRI_AUTORIZACION_PRUEBAS_URL:https://celcer.sri.gob.ec/comprobantes-electronicos-ws/AutorizacionComprobantesOffline?wsdl}
+    recepcion-produccion-url: ${SRI_RECEPCION_PRODUCCION_URL:https://cel.sri.gob.ec/comprobantes-electronicos-ws/RecepcionComprobantesOffline?wsdl}
+    autorizacion-produccion-url: ${SRI_AUTORIZACION_PRODUCCION_URL:https://cel.sri.gob.ec/comprobantes-electronicos-ws/AutorizacionComprobantesOffline?wsdl}
+  soap:
+    connect-timeout: ${SOAP_CONNECT_TIMEOUT:PT10S}
+    read-timeout: ${SOAP_READ_TIMEOUT:PT30S}
+    retries: ${SOAP_RETRIES:2}
+  storage:
+    xml-path: ${FACTUEC_XML_PATH:./storage/xml}
+    pdf-path: ${FACTUEC_PDF_PATH:./storage/pdf}
+    certificates-path: ${FACTUEC_CERTIFICATES_PATH:./storage/certificates}
+  signature:
+    mock-enabled: ${SIGNATURE_MOCK_ENABLED:false}
+  mail:
+    enabled: ${SMTP_ENABLED:false}
+    from: ${SMTP_FROM:no-reply@factuec.local}
+  bootstrap:
+    admin-enabled: ${ADMIN_BOOTSTRAP_ENABLED:true}
+    admin-username: ${ADMIN_USERNAME:admin}
+    admin-email: ${ADMIN_EMAIL:admin@factuec.local}
+    admin-password: ${ADMIN_PASSWORD:}
+
+---
+spring:
+  config:
+    activate:
+      on-profile: local
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/factuec}
+    username: ${DB_USERNAME:factuec}
+    password: ${DB_PASSWORD:factuec}
+  mail:
+    host: ${SMTP_HOST:localhost}
+    port: ${SMTP_PORT:1025}
+    username: ${SMTP_USERNAME:}
+    password: ${SMTP_PASSWORD:}
+  jpa:
+    show-sql: false
+
+factuec:
+  jwt:
+    secret: ${JWT_SECRET}
+  sri:
+    mock-enabled: ${SRI_MOCK_ENABLED:true}
+
+---
+spring:
+  config:
+    activate:
+      on-profile: dev
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+
+factuec:
+  jwt:
+    secret: ${JWT_SECRET}
+  sri:
+    mock-enabled: ${SRI_MOCK_ENABLED:true}
+
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+
+factuec:
+  jwt:
+    secret: ${JWT_SECRET}
+  sri:
+    mock-enabled: ${SRI_MOCK_ENABLED:false}
+  signature:
+    mock-enabled: ${SIGNATURE_MOCK_ENABLED:false}
