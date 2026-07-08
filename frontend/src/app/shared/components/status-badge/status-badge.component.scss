@@ -1,0 +1,46 @@
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 24px;
+  border-radius: 999px;
+  padding: 3px 10px;
+  background: rgba(100, 116, 139, 0.12);
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.status-badge--autorizado,
+.status-badge--activo,
+.status-badge--valido,
+.status-badge--generado {
+  background: rgba(16, 185, 129, 0.12);
+  color: #059669;
+}
+
+.status-badge--borrador,
+.status-badge--enviado,
+.status-badge--firmado,
+.status-badge--por-vencer {
+  background: rgba(245, 158, 11, 0.14);
+  color: #b45309;
+}
+
+.status-badge--rechazado,
+.status-badge--devuelto,
+.status-badge--error,
+.status-badge--expirado,
+.status-badge--invalido,
+.status-badge--bloqueado {
+  background: rgba(239, 68, 68, 0.12);
+  color: #dc2626;
+}
+
+.status-badge--anulado,
+.status-badge--inactivo {
+  background: rgba(100, 116, 139, 0.12);
+  color: #64748b;
+}

@@ -1,0 +1,93 @@
+<main class="login-page">
+  <section class="login-card">
+    <div class="login-card__environment" role="group" aria-label="Ambiente SRI">
+      <button
+        type="button"
+        [class.is-active]="selectedEnvironment() === 'PRUEBAS'"
+        (click)="setEnvironment('PRUEBAS')"
+      >
+        PRUEBAS
+      </button>
+      <button
+        type="button"
+        [class.is-active]="selectedEnvironment() === 'PRODUCCION'"
+        (click)="setEnvironment('PRODUCCION')"
+      >
+        PRODUCCION
+      </button>
+    </div>
+
+    <form class="login-card__panel" [formGroup]="loginForm" (ngSubmit)="submit()">
+      <header>
+        <div class="login-card__logo">
+          <span class="material-symbols-outlined">account_balance_wallet</span>
+        </div>
+        <h1>FactuEC</h1>
+        <p>Facturacion Electronica Segura</p>
+      </header>
+
+      <div class="field">
+        <label for="username">Usuario o Correo</label>
+        <div class="login-field">
+          <span class="material-symbols-outlined">person</span>
+          <input id="username" type="text" formControlName="username" placeholder="ejemplo@empresa.com" autocomplete="username" />
+        </div>
+      </div>
+
+      <div class="field">
+        <div class="login-card__label-row">
+          <label for="password">Contrasena</label>
+          <a href="#">Olvido su contrasena?</a>
+        </div>
+        <div class="login-field">
+          <span class="material-symbols-outlined">lock</span>
+          <input id="password" type="password" formControlName="password" placeholder="********" autocomplete="current-password" />
+          <button class="icon-button" type="button" aria-label="Mostrar contrasena">
+            <span class="material-symbols-outlined">visibility</span>
+          </button>
+        </div>
+      </div>
+
+      <label class="login-card__remember">
+        <input type="checkbox" formControlName="remember" />
+        <span>Mantener sesion iniciada</span>
+      </label>
+
+      <button class="btn btn--primary login-card__submit" type="submit" [disabled]="loading()">
+        <span>{{ loading() ? 'Ingresando...' : 'Ingresar' }}</span>
+        <span class="material-symbols-outlined">login</span>
+      </button>
+
+      <footer>
+        <span>v4.2.0 r2026</span>
+        <strong>
+          <i></i>
+          Servidores SRI Online
+        </strong>
+      </footer>
+    </form>
+
+    <div class="login-card__trust">
+      <span>
+        <i class="material-symbols-outlined">verified_user</i>
+        AES-256 Encriptacion
+      </span>
+      <span>
+        <i class="material-symbols-outlined">cloud_done</i>
+        Respaldo Automatico
+      </span>
+      <span>
+        <i class="material-symbols-outlined">speed</i>
+        Firma en Tiempo Real
+      </span>
+    </div>
+  </section>
+
+  <aside class="login-visual" aria-hidden="true">
+    <div>
+      <span></span>
+      <h2>Potencia tu empresa con FactuEC.</h2>
+      <p>Gestion de comprobantes electronicos con validez legal inmediata ante el SRI.</p>
+    </div>
+  </aside>
+</main>

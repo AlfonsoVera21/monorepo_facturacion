@@ -1,0 +1,80 @@
+<app-page-header
+  title="Configuracion General"
+  subtitle="Parametros operativos compartidos para emision, seguridad y notificaciones."
+  icon="settings"
+/>
+
+<form class="settings-grid" [formGroup]="settingsForm">
+  <section class="card stack">
+    <div class="section-title">
+      <div>
+        <h2>Emision</h2>
+        <p>Valores predeterminados para nuevos comprobantes</p>
+      </div>
+    </div>
+    <div class="form-grid">
+      <div class="field">
+        <label for="serieDefault">Serie por defecto</label>
+        <input id="serieDefault" formControlName="serieDefault" />
+      </div>
+      <div class="field">
+        <label for="ambiente">Ambiente</label>
+        <select id="ambiente" formControlName="ambiente">
+          <option value="PRUEBAS">PRUEBAS</option>
+          <option value="PRODUCCION">PRODUCCION</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="reintentosSri">Reintentos SRI</label>
+        <input id="reintentosSri" formControlName="reintentosSri" />
+      </div>
+    </div>
+  </section>
+
+  <section class="card stack">
+    <div class="section-title">
+      <div>
+        <h2>Notificaciones</h2>
+        <p>Envio automatico de documentos al cliente</p>
+      </div>
+    </div>
+    <div class="field">
+      <label for="correoNotificaciones">Correo de notificaciones</label>
+      <input id="correoNotificaciones" type="email" formControlName="correoNotificaciones" />
+    </div>
+    <label class="toggle-row">
+      <input type="checkbox" formControlName="enviarRideAutomatico" />
+      <span>
+        <strong>Enviar RIDE automaticamente</strong>
+        <small>Incluye PDF y XML cuando el comprobante sea autorizado.</small>
+      </span>
+    </label>
+  </section>
+
+  <section class="card stack">
+    <div class="section-title">
+      <div>
+        <h2>Seguridad</h2>
+        <p>Politicas de acceso empresarial</p>
+      </div>
+    </div>
+    <label class="toggle-row">
+      <input type="checkbox" formControlName="mfaObligatorio" />
+      <span>
+        <strong>MFA obligatorio</strong>
+        <small>Requerido para perfiles con permisos fiscales y usuarios administradores.</small>
+      </span>
+    </label>
+    <app-alert-card
+      tone="info"
+      icon="policy"
+      title="Auditoria activa"
+      description="Cada cambio fiscal queda preparado para persistirse en AuditLog cuando se conecte el backend."
+    />
+  </section>
+
+  <footer class="settings-actions">
+    <button class="btn btn--secondary" type="button">Restaurar</button>
+    <button class="btn btn--primary" type="button">Guardar Configuracion</button>
+  </footer>
+</form>

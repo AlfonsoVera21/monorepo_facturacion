@@ -1,0 +1,55 @@
+.metric-card {
+  position: relative;
+  min-height: 132px;
+  overflow: hidden;
+}
+
+.metric-card p {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.metric-card strong {
+  display: block;
+  margin-top: 12px;
+  color: var(--color-text);
+  font-size: 26px;
+  line-height: 1.1;
+}
+
+.metric-card > .material-symbols-outlined {
+  position: absolute;
+  right: 18px;
+  top: 18px;
+  color: var(--metric-color, var(--color-action));
+  font-size: 28px;
+}
+
+.metric-card small {
+  position: absolute;
+  right: 18px;
+  bottom: 16px;
+  border-radius: 999px;
+  background: rgba(16, 185, 129, 0.1);
+  color: #059669;
+  padding: 4px 8px;
+  font-weight: 800;
+}
+
+.metric-card--success {
+  --metric-color: #10b981;
+}
+
+.metric-card--warning {
+  --metric-color: #f59e0b;
+}
+
+.metric-card--danger {
+  --metric-color: #ef4444;
+}
+
+.metric-card--neutral {
+  --metric-color: #64748b;
+}

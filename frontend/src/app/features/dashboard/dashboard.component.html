@@ -1,0 +1,131 @@
+<app-page-header
+  title="Panel de Control"
+  subtitle="Resumen operativo de facturacion electronica y servicios SRI."
+  icon="dashboard"
+  actionLabel="Nueva Factura"
+  actionIcon="add"
+  actionLink="/comprobantes/nuevo/factura"
+/>
+
+<section class="stats-grid">
+  @for (metric of metrics(); track metric.title) {
+    <app-metric-card
+      [title]="metric.title"
+      [value]="metric.value"
+      [icon]="metric.icon"
+      [trend]="metric.trend || ''"
+      [tone]="metric.tone || 'primary'"
+    />
+  }
+</section>
+
+<section class="dashboard-grid">
+  <article class="card dashboard-chart">
+    <div class="section-title">
+      <div>
+        <h2>Ventas de los Ultimos 6 Meses</h2>
+        <p>Comparativa de ingresos mensuales brutos</p>
+      </div>
+      <div class="dashboard-chart__actions">
+        <button class="btn btn--secondary" type="button">PDF</button>
+        <button class="btn btn--secondary" type="button">Excel</button>
+      </div>
+    </div>
+    <div class="bar-chart">
+      @for (bar of barData; track bar.label) {
+        <div>
+          <span [class]="bar.className"></span>
+          <strong>{{ bar.label }}</strong>
+        </div>
+      }
+    </div>
+  </article>
+
+  <aside class="dashboard-side stack">
+    <div class="card">
+      <div class="section-title">
+        <div>
+          <h3>Alertas Criticas</h3>
+          <p>Requieren accion operativa</p>
+        </div>
+      </div>
+      <div class="stack">
+        <app-alert-card
+          tone="warning"
+          icon="warning"
+          title="Firma por vencer"
+          description="Tu certificado digital vence en 434 dias. Mantener renovacion planificada."
+          actionLabel="RENOVAR AHORA"
+        />
+        <app-alert-card
+          tone="danger"
+          icon="error"
+          title="Rechazos recurrentes"
+          description="Se detectaron 3 comprobantes rechazados por validaciones de esquema."
+          actionLabel="REVISAR ERRORES"
+        />
+      </div>
+    </div>
+
+    <div class="card signature-card">
+      <div class="section-title">
+        <div>
+          <h3>Firma Electronica</h3>
+          <p>UEC-8874-2026</p>
+        </div>
+        <span class="material-symbols-outlined">verified_user</span>
+      </div>
+      <div class="signature-card__progress">
+        <span></span>
+      </div>
+      <div class="total-row">
+        <span>Vigencia</span>
+        <strong>85%</strong>
+      </div>
+      <div class="total-row">
+        <span>Vence el</span>
+        <strong>15 Sep, 2027</strong>
+      </div>
+    </div>
+  </aside>
+</section>
+
+<section class="table-shell">
+  <div class="table-shell__header">
+    <div>
+      <h2>Ultimos comprobantes emitidos</h2>
+      <p>Actividad reciente de emision</p>
+    </div>
+    <a class="btn btn--ghost" href="/comprobantes">Ver todos</a>
+  </div>
+  <div class="table-scroll">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Numero</th>
+          <th>Cliente</th>
+          <th>Fecha</th>
+          <th>Total</th>
+          <th>Estado</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (comprobante of latestComprobantes(); track comprobante.id) {
+          <tr>
+            <td class="mono">{{ comprobante.numero }}</td>
+            <td>{{ comprobante.cliente.razonSocial }}</td>
+            <td>{{ comprobante.fechaEmision }}</td>
+            <td class="mono">${{ comprobante.total.toFixed(2) }}</td>
+            <td><app-status-badge [status]="comprobante.estado" /></td>
+            <td>
+              <button class="icon-button" type="button" aria-label="Mas acciones">
+                <span class="material-symbols-outlined">more_vert</span>
+              </button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</section>

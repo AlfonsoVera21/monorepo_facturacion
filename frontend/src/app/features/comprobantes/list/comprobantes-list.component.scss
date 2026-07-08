@@ -1,0 +1,46 @@
+.comprobantes-filters {
+  margin-bottom: 18px;
+}
+
+.list-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border-top: 1px solid var(--color-border);
+  padding: 14px 18px;
+  color: var(--color-muted);
+  font-size: 13px;
+}
+
+.list-footer div {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.pager {
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--color-muted);
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.pager.is-active {
+  background: var(--color-primary);
+  color: #fff;
+}
+
+.comprobantes-summary {
+  margin-top: 18px;
+}
+
+@media (max-width: 680px) {
+  .list-footer {
+    display: grid;
+  }
+}

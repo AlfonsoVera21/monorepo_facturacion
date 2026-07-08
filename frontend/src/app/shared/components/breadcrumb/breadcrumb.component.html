@@ -1,0 +1,11 @@
+<nav class="breadcrumb" aria-label="Breadcrumb">
+  <a routerLink="/dashboard">Inicio</a>
+  @for (item of items; track item.label) {
+    <span class="material-symbols-outlined">chevron_right</span>
+    @if (item.link) {
+      <a [routerLink]="item.link">{{ item.label }}</a>
+    } @else {
+      <strong>{{ item.label }}</strong>
+    }
+  }
+</nav>

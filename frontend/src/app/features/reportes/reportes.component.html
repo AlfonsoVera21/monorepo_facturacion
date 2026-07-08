@@ -1,0 +1,105 @@
+<app-page-header
+  title="Reportes"
+  subtitle="Indicadores tributarios, ventas y desempeno operativo."
+  icon="assessment"
+/>
+
+<form class="card filters" [formGroup]="filtrosForm">
+  <div class="field">
+    <label for="desde">Desde</label>
+    <input id="desde" type="date" formControlName="desde" />
+  </div>
+  <div class="field">
+    <label for="hasta">Hasta</label>
+    <input id="hasta" type="date" formControlName="hasta" />
+  </div>
+  <div class="field">
+    <label for="establecimiento">Establecimiento</label>
+    <select id="establecimiento" formControlName="establecimiento">
+      <option value="TODOS">Todos</option>
+      <option value="001">Matriz Quito</option>
+      <option value="002">Sucursal Guayaquil</option>
+    </select>
+  </div>
+  <div class="field">
+    <label for="tipo">Reporte</label>
+    <select id="tipo" formControlName="tipo">
+      <option value="VENTAS">Ventas</option>
+      <option value="COMPROBANTES">Comprobantes</option>
+      <option value="CLIENTES">Clientes</option>
+      <option value="PRODUCTOS">Productos</option>
+    </select>
+  </div>
+  <button class="btn btn--primary" type="button"><span class="material-symbols-outlined">analytics</span>Generar</button>
+</form>
+
+<section class="stats-grid report-metrics">
+  <app-metric-card title="Ventas Netas" value="$219,620" icon="payments" tone="primary" trend="+8.6%" />
+  <app-metric-card title="IVA Generado" value="$31,420" icon="receipt" tone="neutral" />
+  <app-metric-card title="Autorizacion" value="98.7%" icon="task_alt" tone="success" />
+  <app-metric-card title="Rechazos" value="1.3%" icon="error" tone="danger" />
+</section>
+
+<section class="report-grid">
+  <article class="card report-chart">
+    <div class="section-title">
+      <div>
+        <h2>Ventas Mensuales</h2>
+        <p>Comparativo del periodo seleccionado</p>
+      </div>
+      <div class="report-actions">
+        <button class="btn btn--secondary" type="button">PDF</button>
+        <button class="btn btn--secondary" type="button">Excel</button>
+      </div>
+    </div>
+    <div class="report-bars">
+      @for (venta of ventas(); track venta.mes; let i = $index) {
+        <div [class]="'report-bars__item report-bars__item--' + i">
+          <span></span>
+          <strong>{{ venta.mes }}</strong>
+          <small>${{ venta.ventas }}</small>
+        </div>
+      }
+    </div>
+  </article>
+
+  <aside class="card report-documents">
+    <div class="section-title">
+      <div>
+        <h2>Reportes Disponibles</h2>
+        <p>Descargas frecuentes</p>
+      </div>
+    </div>
+    <button type="button"><span class="material-symbols-outlined">summarize</span>Ventas por cliente</button>
+    <button type="button"><span class="material-symbols-outlined">inventory_2</span>Productos mas vendidos</button>
+    <button type="button"><span class="material-symbols-outlined">error</span>Comprobantes rechazados</button>
+    <button type="button"><span class="material-symbols-outlined">account_balance</span>Anexo tributario</button>
+  </aside>
+</section>
+
+<section class="table-shell report-table">
+  <div class="table-scroll">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Mes</th>
+          <th>Ventas</th>
+          <th>IVA</th>
+          <th>Comprobantes</th>
+          <th>Estado</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (venta of ventas(); track venta.mes) {
+          <tr>
+            <td>{{ venta.mes }}</td>
+            <td class="mono">${{ venta.ventas }}</td>
+            <td class="mono">${{ (venta.ventas * 0.15).toFixed(0) }}</td>
+            <td>{{ (venta.ventas / 42).toFixed(0) }}</td>
+            <td><app-status-badge status="AUTORIZADO" /></td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</section>

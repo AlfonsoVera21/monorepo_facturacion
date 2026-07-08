@@ -1,0 +1,14 @@
+<ol class="timeline">
+  @for (item of items; track item.title) {
+    <li>
+      <span class="timeline__icon material-symbols-outlined">{{ item.icon || 'check' }}</span>
+      <div>
+        <strong>{{ item.title }}</strong>
+        <small>{{ item.timestamp }}</small>
+      </div>
+      @if (item.status) {
+        <em>{{ item.status }}</em>
+      }
+    </li>
+  }
+</ol>

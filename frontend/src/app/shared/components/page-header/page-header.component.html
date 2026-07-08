@@ -1,0 +1,20 @@
+<header class="page-header">
+  <div class="page-header__copy">
+    @if (icon) {
+      <span class="page-header__icon material-symbols-outlined">{{ icon }}</span>
+    }
+    <div>
+      <h1>{{ title }}</h1>
+      @if (subtitle) {
+        <p>{{ subtitle }}</p>
+      }
+    </div>
+  </div>
+
+  @if (actionLabel && actionLink) {
+    <a class="btn btn--primary" [routerLink]="actionLink">
+      <span class="material-symbols-outlined">{{ actionIcon }}</span>
+      {{ actionLabel }}
+    </a>
+  }
+</header>

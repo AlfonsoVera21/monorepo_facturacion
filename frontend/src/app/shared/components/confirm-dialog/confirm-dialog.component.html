@@ -1,0 +1,12 @@
+@if (open) {
+  <div class="dialog-backdrop" role="presentation" (click)="cancelled.emit()"></div>
+  <section class="confirm-dialog" role="dialog" aria-modal="true" [attr.aria-label]="title">
+    <span class="material-symbols-outlined">help</span>
+    <h2>{{ title }}</h2>
+    <p>{{ message }}</p>
+    <footer>
+      <button class="btn btn--secondary" type="button" (click)="cancelled.emit()">{{ cancelLabel }}</button>
+      <button class="btn btn--primary" type="button" (click)="confirmed.emit()">{{ confirmLabel }}</button>
+    </footer>
+  </section>
+}

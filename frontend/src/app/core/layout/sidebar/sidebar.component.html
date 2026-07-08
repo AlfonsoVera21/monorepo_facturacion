@@ -1,0 +1,41 @@
+<aside class="sidebar" [class.is-open]="open" [class.is-collapsed]="collapsed">
+  <div class="sidebar__brand">
+    <div class="sidebar__logo">
+      <span class="material-symbols-outlined">account_balance_wallet</span>
+    </div>
+    <div class="sidebar__brand-copy">
+      <strong>FactuEC</strong>
+      <span>Facturacion Electronica</span>
+    </div>
+    <button class="icon-button sidebar__close" type="button" (click)="closeSidebar.emit()" aria-label="Cerrar menu">
+      <span class="material-symbols-outlined">close</span>
+    </button>
+  </div>
+
+  <nav class="sidebar__nav" aria-label="Navegacion principal">
+    @for (item of navItems; track item.route) {
+      <a
+        class="sidebar__link"
+        [routerLink]="item.route"
+        routerLinkActive="is-active"
+        [routerLinkActiveOptions]="{ exact: item.route === '/dashboard' }"
+        (click)="closeSidebar.emit()"
+      >
+        <span class="material-symbols-outlined">{{ item.icon }}</span>
+        <span class="sidebar__label">{{ item.label }}</span>
+      </a>
+    }
+  </nav>
+
+  <div class="sidebar__support">
+    <span class="material-symbols-outlined">help_outline</span>
+    <div>
+      <strong>Soporte tecnico</strong>
+      <p>Canal activo para incidencias SRI.</p>
+    </div>
+  </div>
+
+  <button class="sidebar__collapse" type="button" (click)="toggleCollapsed.emit()" aria-label="Colapsar sidebar">
+    <span class="material-symbols-outlined">{{ collapsed ? 'keyboard_double_arrow_right' : 'keyboard_double_arrow_left' }}</span>
+  </button>
+</aside>
