@@ -1,0 +1,77 @@
+<app-page-header
+  title="Usuarios y Roles"
+  subtitle="Control de accesos para operacion contable y administracion fiscal."
+  icon="manage_accounts"
+  actionLabel="Nuevo Usuario"
+  actionIcon="person_add"
+  actionLink="/usuarios"
+/>
+
+<section class="stats-grid">
+  <app-metric-card title="Usuarios Activos" value="18" icon="group" tone="success" />
+  <app-metric-card title="Roles" value="3" icon="admin_panel_settings" tone="primary" />
+  <app-metric-card title="MFA Activo" value="94%" icon="security" tone="success" />
+  <app-metric-card title="Bloqueos" value="0" icon="lock" tone="neutral" />
+</section>
+
+<section class="users-grid">
+  <article class="table-shell">
+    <div class="table-shell__header">
+      <div>
+        <h2>Usuarios</h2>
+        <p>Cuentas registradas en FactuEC</p>
+      </div>
+    </div>
+    <div class="table-scroll">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Usuario</th>
+            <th>Correo</th>
+            <th>Rol</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (user of users(); track user.id) {
+            <tr>
+              <td>
+                <strong>{{ user.name }}</strong>
+                <small>{{ user.username }}</small>
+              </td>
+              <td>{{ user.email }}</td>
+              <td>{{ user.role.name }}</td>
+              <td><app-status-badge [status]="user.status" /></td>
+              <td>
+                <span class="actions">
+                  <button class="icon-button" type="button" aria-label="Editar"><span class="material-symbols-outlined">edit</span></button>
+                  <button class="icon-button" type="button" aria-label="Permisos"><span class="material-symbols-outlined">vpn_key</span></button>
+                </span>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </article>
+
+  <aside class="roles-panel">
+    @for (role of roles(); track role.id) {
+      <article class="card role-card">
+        <div class="section-title">
+          <div>
+            <h2>{{ role.name }}</h2>
+            <p>{{ role.description }}</p>
+          </div>
+          <span class="material-symbols-outlined">admin_panel_settings</span>
+        </div>
+        <div class="permission-list">
+          @for (permission of role.permissions; track permission) {
+            <span>{{ permission }}</span>
+          }
+        </div>
+      </article>
+    }
+  </aside>
+</section>

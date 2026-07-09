@@ -1,0 +1,136 @@
+<app-page-header
+  title="Configuracion de Empresa"
+  subtitle="Datos fiscales, establecimientos y parametros de emision."
+  icon="business"
+/>
+
+<section class="company-tabs">
+  <button class="tab is-active" type="button"><span class="material-symbols-outlined">info</span>Datos Generales</button>
+  <button class="tab" type="button"><span class="material-symbols-outlined">store</span>Establecimientos</button>
+  <button class="tab" type="button"><span class="material-symbols-outlined">key</span>Firma Electronica</button>
+  <button class="tab" type="button"><span class="material-symbols-outlined">settings_suggest</span>Configuracion SRI</button>
+</section>
+
+<form class="company-grid" [formGroup]="empresaForm">
+  <section class="card stack">
+    <div class="section-title">
+      <div>
+        <h2>Datos Generales</h2>
+        <p>Informacion fiscal del emisor</p>
+      </div>
+    </div>
+    <div class="form-grid">
+      <div class="field">
+        <label for="ruc">RUC</label>
+        <input id="ruc" formControlName="ruc" />
+      </div>
+      <div class="field">
+        <label for="razonSocial">Razon Social</label>
+        <input id="razonSocial" formControlName="razonSocial" />
+      </div>
+      <div class="field">
+        <label for="nombreComercial">Nombre Comercial</label>
+        <input id="nombreComercial" formControlName="nombreComercial" />
+      </div>
+      <label class="check-card">
+        <input type="checkbox" formControlName="obligadoContabilidad" />
+        <span>
+          <strong>Obligado a llevar contabilidad</strong>
+          <small>Requerido segun normativa vigente</small>
+        </span>
+      </label>
+      <div class="field field--span-2">
+        <label for="direccionMatriz">Direccion Matriz</label>
+        <textarea id="direccionMatriz" formControlName="direccionMatriz"></textarea>
+      </div>
+    </div>
+  </section>
+
+  <aside class="card logo-card">
+    <span class="material-symbols-outlined">cloud_upload</span>
+    <h2>Cambiar Logo</h2>
+    <p>Formatos sugeridos: PNG o SVG. Maximo 2MB.</p>
+    <button class="btn btn--secondary" type="button">Seleccionar archivo</button>
+  </aside>
+
+  <section class="table-shell company-establishments">
+    <div class="table-shell__header">
+      <div>
+        <h2>Locales y Puntos de Emision</h2>
+        <p>Gestiona establecimientos autorizados por SRI.</p>
+      </div>
+      <button class="btn btn--primary" type="button"><span class="material-symbols-outlined">add</span>Nuevo Establecimiento</button>
+    </div>
+    <div class="table-scroll">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Codigo</th>
+            <th>Nombre / Direccion</th>
+            <th>Puntos de Emision</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (establecimiento of establecimientos(); track establecimiento.id) {
+            <tr>
+              <td class="mono">{{ establecimiento.codigo }}</td>
+              <td>
+                <strong>{{ establecimiento.nombre }}</strong>
+                <small>{{ establecimiento.direccion }}</small>
+              </td>
+              <td>
+                @for (punto of establecimiento.puntosEmision; track punto.id) {
+                  <span class="point-chip">{{ punto.nombre }}</span>
+                }
+              </td>
+              <td><app-status-badge [status]="establecimiento.activo ? 'ACTIVO' : 'INACTIVO'" /></td>
+              <td>
+                <span class="actions">
+                  <button class="icon-button" type="button" aria-label="Editar"><span class="material-symbols-outlined">edit</span></button>
+                  <button class="icon-button" type="button" aria-label="Eliminar"><span class="material-symbols-outlined">delete</span></button>
+                </span>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="card sri-config">
+    <div class="section-title">
+      <div>
+        <h2>Configuracion SRI</h2>
+        <p>Ambiente y tipo de emision</p>
+      </div>
+    </div>
+    <div class="form-grid">
+      <div class="field">
+        <label for="ambiente">Ambiente de Emision</label>
+        <select id="ambiente" formControlName="ambiente">
+          <option value="PRUEBAS">PRUEBAS</option>
+          <option value="PRODUCCION">PRODUCCION</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="tipoEmision">Tipo de Emision</label>
+        <select id="tipoEmision" formControlName="tipoEmision">
+          <option value="NORMAL">NORMAL</option>
+          <option value="INDISPONIBILIDAD">INDISPONIBILIDAD</option>
+        </select>
+      </div>
+    </div>
+    <app-alert-card
+      tone="warning"
+      icon="warning"
+      title="Aviso Importante"
+      description="El modo de indisponibilidad solo debe utilizarse cuando los servicios web del SRI no se encuentren operativos."
+    />
+    <footer>
+      <button class="btn btn--secondary" type="button">Descartar Cambios</button>
+      <button class="btn btn--primary" type="button">Guardar Configuracion</button>
+    </footer>
+  </section>
+</form>

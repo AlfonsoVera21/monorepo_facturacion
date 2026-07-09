@@ -1,0 +1,51 @@
+.alert-card {
+  display: flex;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--alert-border, var(--color-border));
+  border-radius: 8px;
+  background: var(--alert-bg, #fff);
+}
+
+.alert-card > .material-symbols-outlined {
+  color: var(--alert-color, var(--color-action));
+}
+
+.alert-card h3 {
+  margin: 0;
+  font-size: 14px;
+}
+
+.alert-card p {
+  margin: 4px 0 0;
+  color: var(--color-muted);
+  font-size: 13px;
+}
+
+.alert-card button {
+  margin-top: 10px;
+  border: 0;
+  background: transparent;
+  color: var(--alert-color, var(--color-action));
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.alert-card--warning {
+  --alert-bg: rgba(245, 158, 11, 0.09);
+  --alert-border: rgba(245, 158, 11, 0.22);
+  --alert-color: #b45309;
+}
+
+.alert-card--danger {
+  --alert-bg: rgba(239, 68, 68, 0.08);
+  --alert-border: rgba(239, 68, 68, 0.22);
+  --alert-color: #dc2626;
+}
+
+.alert-card--success {
+  --alert-bg: rgba(16, 185, 129, 0.08);
+  --alert-border: rgba(16, 185, 129, 0.22);
+  --alert-color: #059669;
+}

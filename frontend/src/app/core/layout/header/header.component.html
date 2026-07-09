@@ -1,0 +1,32 @@
+<header class="topbar">
+  <div class="topbar__left">
+    <button class="icon-button topbar__menu" type="button" (click)="openSidebar.emit()" aria-label="Abrir menu">
+      <span class="material-symbols-outlined">menu</span>
+    </button>
+    <label class="topbar__search">
+      <span class="material-symbols-outlined">search</span>
+      <input type="search" placeholder="Buscar comprobantes..." />
+    </label>
+  </div>
+
+  <div class="topbar__right">
+    <div class="sri-pill">
+      <span></span>
+      <strong>SRI ONLINE</strong>
+    </div>
+    <span class="environment-badge environment-badge--production">PRODUCCION</span>
+    <button class="icon-button" type="button" aria-label="Notificaciones">
+      <span class="material-symbols-outlined">notifications</span>
+      <i></i>
+    </button>
+    <div class="topbar__user">
+      <div>
+        <strong>{{ user()?.name || 'Admin User' }}</strong>
+        <span>{{ user()?.role?.name || 'Administrador' }}</span>
+      </div>
+      <button class="avatar-button" type="button" (click)="logout()" aria-label="Cerrar sesion">
+        {{ (user()?.name || 'AU').slice(0, 2).toUpperCase() }}
+      </button>
+    </div>
+  </div>
+</header>

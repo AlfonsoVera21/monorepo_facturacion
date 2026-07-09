@@ -1,0 +1,179 @@
+<app-breadcrumb [items]="[{ label: 'Comprobantes', link: '/comprobantes' }, { label: 'Nueva Factura' }]" />
+
+<app-page-header
+  title="Emision de Factura"
+  subtitle="Formulario reactivo listo para conectar con el endpoint de borrador o emision."
+  icon="receipt_long"
+/>
+
+<form class="invoice-layout" [formGroup]="facturaForm">
+  <section class="card stack">
+    <div class="section-title">
+      <div>
+        <h2>Informacion del Comprobante</h2>
+        <p>Secuencial, fecha y datos tributarios base</p>
+      </div>
+    </div>
+    <div class="form-grid">
+      <div class="field">
+        <label for="secuencial">Secuencial</label>
+        <input id="secuencial" formControlName="secuencial" />
+      </div>
+      <div class="field">
+        <label for="fechaEmision">Fecha de Emision</label>
+        <input id="fechaEmision" type="date" formControlName="fechaEmision" />
+      </div>
+      <div class="field">
+        <label for="moneda">Tipo de Moneda</label>
+        <select id="moneda" formControlName="moneda">
+          <option value="USD">USD - Dolar Americano</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="guiaRemision">Guia de Remision</label>
+        <input id="guiaRemision" formControlName="guiaRemision" placeholder="Opcional" />
+      </div>
+    </div>
+  </section>
+
+  <section class="card stack">
+    <div class="section-title">
+      <div>
+        <h2>Datos del Cliente</h2>
+        <p>Identificacion y correo para envio automatico</p>
+      </div>
+      <button class="btn btn--secondary" type="button">
+        <span class="material-symbols-outlined">person_add</span>
+        Nuevo Cliente
+      </button>
+    </div>
+    <div class="field">
+      <label for="clienteBusqueda">Buscar cliente</label>
+      <input id="clienteBusqueda" formControlName="clienteBusqueda" />
+    </div>
+    <div class="form-grid">
+      <div class="field">
+        <label for="razonSocial">Razon Social</label>
+        <input id="razonSocial" formControlName="razonSocial" />
+      </div>
+      <div class="field">
+        <label for="identificacion">RUC / Cedula</label>
+        <input id="identificacion" formControlName="identificacion" />
+      </div>
+      <div class="field field--span-2">
+        <label for="correo">Correo Electronico</label>
+        <input id="correo" type="email" formControlName="correo" />
+      </div>
+    </div>
+  </section>
+
+  <section class="card invoice-detail">
+    <div class="section-title">
+      <div>
+        <h2>Detalle de Factura</h2>
+        <p>Items, descuentos e IVA por linea</p>
+      </div>
+      <button class="btn btn--secondary" type="button" (click)="addItem()">
+        <span class="material-symbols-outlined">add</span>
+        Agregar Item
+      </button>
+    </div>
+
+    <div class="invoice-items" formArrayName="detalles">
+      @for (detalle of detalles.controls; track $index; let i = $index) {
+        <div class="invoice-item" [formGroupName]="i">
+          <div class="field">
+            <label>Codigo</label>
+            <input formControlName="codigo" />
+          </div>
+          <div class="field invoice-item__description">
+            <label>Descripcion</label>
+            <input formControlName="descripcion" />
+          </div>
+          <div class="field">
+            <label>Cant.</label>
+            <input type="number" min="0" step="0.01" formControlName="cantidad" />
+          </div>
+          <div class="field">
+            <label>P. Unitario</label>
+            <input type="number" min="0" step="0.01" formControlName="precioUnitario" />
+          </div>
+          <div class="field">
+            <label>Desc %</label>
+            <input type="number" min="0" max="100" step="1" formControlName="descuento" />
+          </div>
+          <div class="field">
+            <label>IVA</label>
+            <select formControlName="tarifaIva">
+              <option value="15%">15%</option>
+              <option value="12%">12%</option>
+              <option value="0%">0%</option>
+              <option value="EXENTO">Exento</option>
+              <option value="NO_OBJETO">No Objeto</option>
+            </select>
+          </div>
+          <button class="icon-button" type="button" (click)="removeItem(i)" aria-label="Eliminar item">
+            <span class="material-symbols-outlined">delete</span>
+          </button>
+        </div>
+      }
+    </div>
+  </section>
+
+  <aside class="invoice-summary stack">
+    <section class="card" formGroupName="pago">
+      <div class="section-title">
+        <div>
+          <h2>Formas de Pago SRI</h2>
+          <p>Informacion requerida en XML</p>
+        </div>
+      </div>
+      <div class="field">
+        <label for="formaPago">Forma de Pago</label>
+        <select id="formaPago" formControlName="formaPago">
+          <option>SIN UTILIZACION DEL SISTEMA FINANCIERO</option>
+          <option>OTROS CON UTILIZACION DEL SISTEMA FINANCIERO</option>
+          <option>TARJETA DE CREDITO</option>
+          <option>TRANSFERENCIA BANCARIA</option>
+        </select>
+      </div>
+      <div class="form-grid">
+        <div class="field">
+          <label for="valorPago">Valor</label>
+          <input id="valorPago" type="number" formControlName="valor" />
+        </div>
+        <div class="field">
+          <label for="plazoPago">Plazo</label>
+          <input id="plazoPago" type="number" formControlName="plazo" />
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="section-title">
+        <div>
+          <h2>Totales</h2>
+          <p>Calculo local temporal</p>
+        </div>
+      </div>
+      <div class="total-row"><span>Subtotal gravado</span><strong>${{ subtotal().toFixed(2) }}</strong></div>
+      <div class="total-row"><span>Descuento Total</span><strong>$0.00</strong></div>
+      <div class="total-row"><span>IVA</span><strong>${{ iva().toFixed(2) }}</strong></div>
+      <div class="total-row total-row--grand"><span>Total a Pagar</span><strong>${{ total().toFixed(2) }}</strong></div>
+      <div class="invoice-actions">
+        <button class="btn btn--secondary" type="button">
+          <span class="material-symbols-outlined">save</span>
+          Guardar Borrador
+        </button>
+        <button class="btn btn--secondary" type="button">
+          <span class="material-symbols-outlined">visibility</span>
+          Previsualizar RIDE
+        </button>
+        <button class="btn btn--primary" type="button">
+          <span class="material-symbols-outlined">send</span>
+          Emitir y Firmar
+        </button>
+      </div>
+    </section>
+  </aside>
+</form>

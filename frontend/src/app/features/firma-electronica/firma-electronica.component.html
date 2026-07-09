@@ -1,0 +1,91 @@
+<app-page-header
+  title="Firma Electronica"
+  subtitle="Administracion del certificado digital .p12 usado para firmar XML."
+  icon="verified_user"
+/>
+
+<section class="signature-grid" [formGroup]="firmaForm">
+  <article class="card upload-panel">
+    <span class="material-symbols-outlined">upload_file</span>
+    <h2>Certificado Digital (.p12)</h2>
+    <p>Archivo actual: {{ firma()?.archivoNombre }}</p>
+    <button class="btn btn--primary" type="button">Subir nueva firma</button>
+  </article>
+
+  <article class="card stack">
+    <div class="section-title">
+      <div>
+        <h2>Credenciales de Firma</h2>
+        <p>La contrasena real debe resolverse desde backend o secreto seguro.</p>
+      </div>
+    </div>
+    <div class="form-grid">
+      <div class="field">
+        <label for="password">Contrasena de Firma</label>
+        <input id="password" type="password" formControlName="password" />
+      </div>
+      <div class="field">
+        <label for="passwordRef">Referencia de Secreto</label>
+        <input id="passwordRef" formControlName="passwordRef" />
+      </div>
+    </div>
+  </article>
+
+  @if (firma(); as item) {
+    <article class="card certificate-card">
+      <div class="section-title">
+        <div>
+          <h2>Estado del Certificado</h2>
+          <p>Validacion local del certificado</p>
+        </div>
+        <app-status-badge [status]="item.estado" />
+      </div>
+      <dl>
+        <div><dt>Titular</dt><dd>{{ item.titular }}</dd></div>
+        <div><dt>Vencimiento</dt><dd>{{ item.fechaVencimiento }}</dd></div>
+        <div><dt>Emisor</dt><dd>{{ item.emisor }}</dd></div>
+        <div><dt>Validez</dt><dd>Quedan {{ item.diasRestantes }} dias de validez</dd></div>
+      </dl>
+    </article>
+  }
+
+  <app-alert-card
+    tone="success"
+    icon="security"
+    title="Perfil protegido"
+    description="MFA activo y registro de auditoria habilitado para cambios fiscales."
+  />
+
+  <article class="table-shell signature-history">
+    <div class="table-shell__header">
+      <div>
+        <h2>Historial de Cambios</h2>
+        <p>Auditoria reciente sobre firma electronica</p>
+      </div>
+    </div>
+    <div class="table-scroll">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Usuario</th>
+            <th>Accion</th>
+            <th>Descripcion</th>
+            <th>IP</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (log of logs(); track log.id) {
+            <tr>
+              <td>{{ log.fecha }}</td>
+              <td>{{ log.usuario }}</td>
+              <td>{{ log.accion }}</td>
+              <td>{{ log.descripcion }}</td>
+              <td class="mono">{{ log.ip }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </article>
+</section>

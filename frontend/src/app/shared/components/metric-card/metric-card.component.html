@@ -1,0 +1,10 @@
+<article class="metric-card" [class]="'metric-card metric-card--' + tone">
+  <div>
+    <p>{{ title }}</p>
+    <strong>{{ value }}</strong>
+  </div>
+  <span class="material-symbols-outlined">{{ icon }}</span>
+  @if (trend) {
+    <small>{{ trend }}</small>
+  }
+</article>

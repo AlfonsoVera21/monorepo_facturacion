@@ -1,0 +1,74 @@
+<app-page-header
+  title="Productos y Servicios"
+  subtitle="Administra el catalogo de items para facturacion electronica."
+  icon="inventory_2"
+  actionLabel="Nuevo Producto"
+  actionIcon="add"
+  actionLink="/productos"
+/>
+
+<section class="stats-grid">
+  <app-metric-card title="Total Items" value="1,284" icon="inventory_2" trend="+4.5%" tone="primary" />
+  <app-metric-card title="Servicios" value="432" icon="category" tone="neutral" />
+  <app-metric-card title="Venta Mes Prom." value="$12,450" icon="payments" tone="success" />
+  <app-metric-card title="Stock Bajo" value="12" icon="warning" tone="warning" />
+</section>
+
+<section class="catalog-tabs">
+  <button class="chip is-active" type="button">Todos</button>
+  <button class="chip" type="button">Productos</button>
+  <button class="chip" type="button">Servicios</button>
+  <button class="btn btn--secondary" type="button">
+    <span class="material-symbols-outlined">filter_list</span>
+    Filtros Avanzados
+  </button>
+</section>
+
+<section class="table-shell">
+  <div class="table-scroll">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Codigo</th>
+          <th>Nombre del Item</th>
+          <th>Tipo</th>
+          <th>Precio Unit.</th>
+          <th>IVA</th>
+          <th>Estado</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (producto of productos(); track producto.id) {
+          <tr>
+            <td class="mono">{{ producto.codigo }}</td>
+            <td>
+              <strong>{{ producto.nombre }}</strong>
+              <small>{{ producto.categoria }}</small>
+            </td>
+            <td>{{ producto.tipo }}</td>
+            <td class="mono">${{ producto.precioUnitario.toFixed(2) }}</td>
+            <td>{{ producto.tarifaIva }}</td>
+            <td><app-status-badge [status]="producto.estado" /></td>
+            <td>
+              <span class="actions">
+                <button class="icon-button" type="button" aria-label="Editar"><span class="material-symbols-outlined">edit</span></button>
+                <button class="icon-button" type="button" aria-label="Eliminar"><span class="material-symbols-outlined">delete</span></button>
+              </span>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<aside class="card import-card">
+  <span class="material-symbols-outlined">upload_file</span>
+  <div>
+    <h2>Importacion Masiva de Productos</h2>
+    <p>Ahorra tiempo importando productos y servicios desde una plantilla estandarizada.</p>
+  </div>
+  <button class="btn btn--primary" type="button">Cargar Archivo</button>
+  <button class="btn btn--secondary" type="button">Descargar Plantilla</button>
+</aside>

@@ -1,0 +1,74 @@
+<app-page-header
+  title="Gestion de Clientes"
+  subtitle="Administra la base de datos de socios comerciales y clientes recurrentes."
+  icon="group"
+  actionLabel="Nuevo Cliente"
+  actionIcon="person_add"
+  actionLink="/clientes"
+/>
+
+<section class="stats-grid">
+  <app-metric-card title="Total Clientes" value="1,284" icon="group" tone="primary" />
+  <app-metric-card title="Activos" value="1,150" icon="verified" tone="success" />
+  <app-metric-card title="Ventas Mes" value="$42,390" icon="receipt_long" tone="primary" />
+  <app-metric-card title="Inactivos" value="134" icon="warning" tone="warning" />
+</section>
+
+<section class="card client-toolbar">
+  <div>
+    <span class="material-symbols-outlined">filter_list</span>
+    <strong>FILTRAR POR:</strong>
+  </div>
+  <button class="chip is-active" type="button">Todos</button>
+  <button class="chip" type="button">RUC</button>
+  <button class="chip" type="button">Cedula</button>
+  <button class="chip" type="button">Pasaporte</button>
+  <span class="toolbar-spacer"></span>
+  <button class="btn btn--secondary" type="button">
+    <span class="material-symbols-outlined">file_download</span>
+    Exportar
+  </button>
+</section>
+
+<section class="table-shell">
+  <div class="table-scroll">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Identificacion</th>
+          <th>Razon Social</th>
+          <th>Correo</th>
+          <th>Telefono</th>
+          <th>Estado</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (cliente of clientes(); track cliente.id) {
+          <tr>
+            <td class="mono">{{ cliente.identificacion }}</td>
+            <td>{{ cliente.razonSocial }}</td>
+            <td>{{ cliente.email }}</td>
+            <td>{{ cliente.telefono }}</td>
+            <td><app-status-badge [status]="cliente.estado" /></td>
+            <td>
+              <span class="actions">
+                <button class="icon-button" type="button" aria-label="Editar"><span class="material-symbols-outlined">edit</span></button>
+                <button class="icon-button" type="button" aria-label="Historial"><span class="material-symbols-outlined">history</span></button>
+                <button class="icon-button" type="button" aria-label="Eliminar"><span class="material-symbols-outlined">delete</span></button>
+              </span>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<aside class="card tip-card">
+  <span class="material-symbols-outlined">lightbulb</span>
+  <div>
+    <h2>Tip Profesional</h2>
+    <p>Puedes importar masivamente tu lista de clientes utilizando una plantilla Excel compatible con FactuEC.</p>
+  </div>
+</aside>

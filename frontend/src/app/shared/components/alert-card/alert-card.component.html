@@ -1,0 +1,10 @@
+<article class="alert-card" [class]="'alert-card alert-card--' + tone">
+  <span class="material-symbols-outlined">{{ icon }}</span>
+  <div>
+    <h3>{{ title }}</h3>
+    <p>{{ description }}</p>
+    @if (actionLabel) {
+      <button type="button">{{ actionLabel }}</button>
+    }
+  </div>
+</article>

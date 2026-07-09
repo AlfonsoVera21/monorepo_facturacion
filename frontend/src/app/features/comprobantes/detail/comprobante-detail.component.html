@@ -1,0 +1,133 @@
+<app-breadcrumb [items]="[{ label: 'Comprobantes', link: '/comprobantes' }, { label: 'Detalle' }]" />
+
+@if (comprobante(); as item) {
+  <header class="detail-header">
+    <a class="icon-button" routerLink="/comprobantes" aria-label="Volver">
+      <span class="material-symbols-outlined">arrow_back</span>
+    </a>
+    <div>
+      <h1>Factura {{ item.numero }}</h1>
+      <p>Creada el {{ item.fechaEmision }}, 14:30</p>
+    </div>
+    <app-status-badge [status]="item.estado" />
+    <div class="detail-header__actions">
+      <button class="btn btn--secondary" type="button"><span class="material-symbols-outlined">picture_as_pdf</span>RIDE PDF</button>
+      <button class="btn btn--secondary" type="button"><span class="material-symbols-outlined">code</span>XML</button>
+      <button class="btn btn--primary" type="button"><span class="material-symbols-outlined">mail</span>Reenviar</button>
+    </div>
+  </header>
+
+  <section class="detail-grid">
+    <div class="stack">
+      <article class="card">
+        <div class="section-title">
+          <div>
+            <h2>Informacion General</h2>
+            <p>Datos de autorizacion del SRI</p>
+          </div>
+          <span class="material-symbols-outlined">info</span>
+        </div>
+        <dl class="detail-list">
+          <div><dt>Clave de Acceso</dt><dd class="mono">{{ item.claveAcceso }}</dd></div>
+          <div><dt>No. Autorizacion</dt><dd class="mono">{{ item.numeroAutorizacion }}</dd></div>
+          <div><dt>Ambiente</dt><dd>{{ item.ambiente }}</dd></div>
+          <div><dt>Fecha Autorizacion</dt><dd>{{ item.fechaAutorizacion }}</dd></div>
+        </dl>
+      </article>
+
+      <article class="card">
+        <div class="section-title">
+          <div>
+            <h2>Emisor y Receptor</h2>
+            <p>Informacion tributaria del comprobante</p>
+          </div>
+          <span class="material-symbols-outlined">badge</span>
+        </div>
+        <div class="party-grid">
+          <div>
+            <small>Emisor</small>
+            <strong>SOLUCIONES TECNOLOGICAS S.A.</strong>
+            <span>RUC: 1790000000001</span>
+          </div>
+          <div>
+            <small>Receptor</small>
+            <strong>{{ item.cliente.razonSocial }}</strong>
+            <span>RUC/CI: {{ item.identificacion }} | {{ item.cliente.email }}</span>
+          </div>
+        </div>
+      </article>
+
+      <article class="table-shell">
+        <div class="table-shell__header">
+          <div>
+            <h2>Resumen de Comprobante</h2>
+            <p>{{ item.detalles.length }} items</p>
+          </div>
+        </div>
+        <div class="table-scroll">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Codigo</th>
+                <th>Descripcion</th>
+                <th>Cant.</th>
+                <th>P. Unit</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (detalle of item.detalles; track detalle.id) {
+                <tr>
+                  <td class="mono">{{ detalle.codigo }}</td>
+                  <td>{{ detalle.descripcion }}</td>
+                  <td>{{ detalle.cantidad.toFixed(2) }}</td>
+                  <td class="mono">${{ detalle.precioUnitario.toFixed(2) }}</td>
+                  <td class="mono">${{ detalle.subtotal.toFixed(2) }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        <div class="detail-totals">
+          <div class="total-row"><span>Subtotal:</span><strong>${{ item.subtotal.toFixed(2) }}</strong></div>
+          <div class="total-row"><span>IVA:</span><strong>${{ item.iva.toFixed(2) }}</strong></div>
+          <div class="total-row total-row--grand"><span>Total:</span><strong>${{ item.total.toFixed(2) }}</strong></div>
+        </div>
+      </article>
+    </div>
+
+    <aside class="stack">
+      <article class="card">
+        <div class="section-title">
+          <div>
+            <h2>Trazabilidad SRI</h2>
+            <p>Linea de tiempo operativa</p>
+          </div>
+        </div>
+        <app-timeline [items]="timeline" />
+      </article>
+
+      <article class="card notification-card">
+        <div class="section-title">
+          <div>
+            <h2>Notificaciones Cliente</h2>
+            <p>Canales de entrega</p>
+          </div>
+          <span class="material-symbols-outlined">send</span>
+        </div>
+        <div>
+          <span class="material-symbols-outlined">mail</span>
+          <strong>Correo de Autorizacion</strong>
+          <small>Enviado a: {{ item.cliente.email }}</small>
+          <app-status-badge status="ENTREGADO" />
+        </div>
+        <div>
+          <span class="material-symbols-outlined">chat</span>
+          <strong>Notificacion WhatsApp</strong>
+          <small>Programado</small>
+          <app-status-badge status="ENVIADO" />
+        </div>
+      </article>
+    </aside>
+  </section>
+}

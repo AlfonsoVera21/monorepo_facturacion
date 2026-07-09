@@ -1,0 +1,112 @@
+<app-breadcrumb [items]="[{ label: 'Comprobantes' }, { label: 'Listado' }]" />
+
+<app-page-header
+  title="Listado de Comprobantes"
+  subtitle="Consulta, descarga y reenvia documentos electronicos autorizados por SRI."
+  icon="description"
+  actionLabel="Nueva Factura"
+  actionIcon="add"
+  actionLink="/comprobantes/nuevo/factura"
+/>
+
+<form class="card filters comprobantes-filters" [formGroup]="filtersForm">
+  <div class="field">
+    <label for="fechaDesde">Rango de fechas</label>
+    <input id="fechaDesde" type="date" formControlName="fechaDesde" />
+  </div>
+  <div class="field">
+    <label for="cliente">Cliente</label>
+    <input id="cliente" type="search" formControlName="cliente" placeholder="Buscar cliente" />
+  </div>
+  <div class="field">
+    <label for="tipo">Tipo</label>
+    <select id="tipo" formControlName="tipo">
+      <option value="TODOS">Todos los tipos</option>
+      <option value="FACTURA">Factura</option>
+      <option value="NOTA_CREDITO">Nota de Credito</option>
+      <option value="RETENCION">Retencion</option>
+    </select>
+  </div>
+  <div class="field">
+    <label for="estado">Estado SRI</label>
+    <select id="estado" formControlName="estado">
+      <option value="TODOS">Todos los estados</option>
+      <option value="AUTORIZADO">Autorizado</option>
+      <option value="ENVIADO">En procesamiento</option>
+      <option value="RECHAZADO">Rechazado</option>
+      <option value="DEVUELTO">Devuelto</option>
+    </select>
+  </div>
+  <button class="btn btn--primary" type="button">
+    <span class="material-symbols-outlined">filter_alt</span>
+    Filtrar
+  </button>
+  <button class="btn btn--secondary" type="button" aria-label="Limpiar filtros">
+    <span class="material-symbols-outlined">filter_alt_off</span>
+  </button>
+</form>
+
+<section class="table-shell">
+  <div class="table-scroll">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>Tipo</th>
+          <th>Numero</th>
+          <th>Cliente</th>
+          <th>Identificacion</th>
+          <th>Total</th>
+          <th>Estado</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (comprobante of comprobantes(); track comprobante.id) {
+          <tr>
+            <td>{{ comprobante.fechaEmision }}</td>
+            <td>{{ typeLabel(comprobante.tipo) }}</td>
+            <td class="mono">{{ comprobante.numero }}</td>
+            <td>{{ comprobante.cliente.razonSocial }}</td>
+            <td class="mono">{{ comprobante.identificacion }}</td>
+            <td class="mono">${{ comprobante.total.toFixed(2) }}</td>
+            <td><app-status-badge [status]="comprobante.estado" /></td>
+            <td>
+              <span class="actions">
+                <a class="icon-button" [routerLink]="['/comprobantes', comprobante.id]" aria-label="Ver comprobante">
+                  <span class="material-symbols-outlined">visibility</span>
+                </a>
+                <button class="icon-button" type="button" aria-label="Descargar RIDE">
+                  <span class="material-symbols-outlined">picture_as_pdf</span>
+                </button>
+                <button class="icon-button" type="button" aria-label="Descargar XML">
+                  <span class="material-symbols-outlined">code</span>
+                </button>
+                <button class="icon-button" type="button" aria-label="Enviar por correo">
+                  <span class="material-symbols-outlined">mail</span>
+                </button>
+              </span>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+  <footer class="list-footer">
+    <span>Mostrando 1 a {{ comprobantes().length }} de 124 comprobantes</span>
+    <div>
+      <button class="icon-button" type="button" aria-label="Anterior"><span class="material-symbols-outlined">chevron_left</span></button>
+      <button class="pager is-active" type="button">1</button>
+      <button class="pager" type="button">2</button>
+      <button class="pager" type="button">3</button>
+      <button class="icon-button" type="button" aria-label="Siguiente"><span class="material-symbols-outlined">chevron_right</span></button>
+    </div>
+  </footer>
+</section>
+
+<section class="stats-grid comprobantes-summary">
+  <app-metric-card title="Autorizados Hoy" value="24" icon="task_alt" tone="success" />
+  <app-metric-card title="Rechazados" value="2" icon="error" tone="danger" />
+  <app-metric-card title="Ventas Mes" value="$12.4k" icon="payments" tone="primary" />
+  <app-metric-card title="Saldo Prepago" value="542 Docs" icon="inventory" tone="neutral" />
+</section>

@@ -1,0 +1,90 @@
+<app-page-header
+  title="SRI Monitor Tecnico"
+  subtitle="Seguimiento en tiempo real de servicios web y errores de emision."
+  icon="analytics"
+/>
+
+@if (status(); as sri) {
+  <section class="stats-grid">
+    <app-metric-card title="Comprobantes en Error" [value]="numberText(sri.errorsToday)" icon="error_outline" tone="danger" trend="+2" />
+    <app-metric-card title="Pendientes de Envio" [value]="numberText(sri.pendingQueue)" icon="schedule" tone="warning" />
+    <app-metric-card title="Autorizados Hoy" [value]="numberText(sri.authorizedToday)" icon="task_alt" tone="success" />
+    <app-metric-card title="SRI Uptime" [value]="sri.uptime" icon="dns" tone="success" />
+  </section>
+}
+
+<section class="sri-grid">
+  <article class="table-shell">
+    <div class="table-shell__header">
+      <div>
+        <h2>Log de Errores SRI</h2>
+        <p>Todos los errores recientes</p>
+      </div>
+      <button class="btn btn--primary" type="button"><span class="material-symbols-outlined">refresh</span>Reenviar pendientes</button>
+    </div>
+    <div class="table-scroll">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Fecha / Hora</th>
+            <th>Comprobante</th>
+            <th>Codigo</th>
+            <th>Mensaje del SRI</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (mensaje of mensajes(); track mensaje.id) {
+            <tr>
+              <td>{{ mensaje.fecha }}</td>
+              <td class="mono">{{ mensaje.comprobanteNumero }}</td>
+              <td class="mono">{{ mensaje.codigo }}</td>
+              <td>
+                <strong>{{ mensaje.mensaje }}</strong>
+                <small>{{ mensaje.informacionAdicional }}</small>
+              </td>
+              <td><app-status-badge [status]="mensaje.estado" /></td>
+              <td>
+                <span class="actions">
+                  <button class="icon-button" type="button" aria-label="Reenviar"><span class="material-symbols-outlined">send</span></button>
+                  <button class="icon-button" type="button" aria-label="Editar"><span class="material-symbols-outlined">edit_square</span></button>
+                </span>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </article>
+
+  <aside class="stack">
+    <article class="card console-card">
+      <div class="section-title">
+        <div>
+          <h2>Consola de Eventos Recientes</h2>
+          <p>Actividad tecnica local</p>
+        </div>
+        <span class="material-symbols-outlined">terminal</span>
+      </div>
+      <code>[15:30:11] CONEXION: Autenticacion exitosa con SRI.</code>
+      <code>[15:30:14] ENVIO: Comprobante 001-001-000000455 enviado.</code>
+      <code>[15:30:18] ERROR: Recepcion fallida. Codigo HTTP 503.</code>
+      <code>[15:31:02] REINTENTO: Iniciando cola #451.</code>
+      <code>[15:32:00] ESTADO: Disponibilidad SRI 100% en ping.</code>
+    </article>
+
+    <article class="card health-card">
+      <div class="section-title">
+        <div>
+          <h2>Salud del Sistema</h2>
+          <p>Servicios criticos locales</p>
+        </div>
+      </div>
+      <div><span>Base de Datos</span><strong>OPTIMO</strong></div>
+      <div><span>Servicio de Firma</span><strong>OPTIMO</strong></div>
+      <div><span>Cola de Procesos</span><strong>8 TRABAJOS</strong></div>
+      <div><span>Almacenamiento XML</span><strong>45%</strong></div>
+    </article>
+  </aside>
+</section>
