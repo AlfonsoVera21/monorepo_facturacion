@@ -1,8 +1,10 @@
-import { Injectable, computed, signal } from '@angular/core';
-import { Observable, delay, of, tap } from 'rxjs';
+import { Injectable, computed, inject, signal } from '@angular/core';
+import { Observable, map, switchMap, tap } from 'rxjs';
 
 import { User } from '../models/factuec.models';
-import { CURRENT_USER } from './mock-data';
+import { ApiService } from './api.service';
+import { AuthResponseDto, UserMeResponseDto } from './backend-api.models';
+import { mapUser } from './backend-mappers';
 
 export interface LoginCredentials {
   username: string;
@@ -16,7 +18,9 @@ export interface LoginCredentials {
 })
 export class AuthService {
   private readonly tokenKey = 'factuec_access_token';
+  private readonly refreshTokenKey = 'factuec_refresh_token';
   private readonly userKey = 'factuec_user';
+  private readonly apiService = inject(ApiService);
   private readonly tokenSignal = signal<string | null>(localStorage.getItem(this.tokenKey));
   private readonly userSignal = signal<User | null>(this.readUser());
 
@@ -25,21 +29,33 @@ export class AuthService {
   readonly isLoggedIn = computed(() => Boolean(this.tokenSignal() && this.userSignal()));
 
   login(credentials: LoginCredentials): Observable<User> {
-    const token = `mock-jwt-${credentials.environment.toLowerCase()}-${Date.now()}`;
+    return this.apiService.post<AuthResponseDto>('/auth/login', {
+      username: credentials.username,
+      password: credentials.password
+    }).pipe(
+      tap((auth) => {
+        localStorage.setItem(this.tokenKey, auth.accessToken);
+        localStorage.setItem(this.refreshTokenKey, auth.refreshToken);
+        this.tokenSignal.set(auth.accessToken);
+      }),
+      switchMap(() => this.loadCurrentUser())
+    );
+  }
 
-    return of({ ...CURRENT_USER }).pipe(
-      delay(350),
-      tap((user) => {
-        localStorage.setItem(this.tokenKey, token);
+  loadCurrentUser(): Observable<User> {
+    return this.apiService.get<UserMeResponseDto>('/auth/me').pipe(
+      map((response) => {
+        const user = mapUser(response);
         localStorage.setItem(this.userKey, JSON.stringify(user));
-        this.tokenSignal.set(token);
         this.userSignal.set(user);
+        return user;
       })
     );
   }
 
   logout(): void {
     localStorage.removeItem(this.tokenKey);
+    localStorage.removeItem(this.refreshTokenKey);
     localStorage.removeItem(this.userKey);
     this.tokenSignal.set(null);
     this.userSignal.set(null);

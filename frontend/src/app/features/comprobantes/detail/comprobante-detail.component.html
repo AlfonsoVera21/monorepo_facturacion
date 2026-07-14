@@ -11,8 +11,8 @@
     </div>
     <app-status-badge [status]="item.estado" />
     <div class="detail-header__actions">
-      <button class="btn btn--secondary" type="button"><span class="material-symbols-outlined">picture_as_pdf</span>RIDE PDF</button>
-      <button class="btn btn--secondary" type="button"><span class="material-symbols-outlined">code</span>XML</button>
+      <button class="btn btn--secondary" type="button" (click)="openRide(item)"><span class="material-symbols-outlined">picture_as_pdf</span>RIDE PDF</button>
+      <button class="btn btn--secondary" type="button" (click)="downloadXml(item)"><span class="material-symbols-outlined">code</span>XML</button>
       <button class="btn btn--primary" type="button"><span class="material-symbols-outlined">mail</span>Reenviar</button>
     </div>
   </header>
@@ -29,9 +29,13 @@
         </div>
         <dl class="detail-list">
           <div><dt>Clave de Acceso</dt><dd class="mono">{{ item.claveAcceso }}</dd></div>
-          <div><dt>No. Autorizacion</dt><dd class="mono">{{ item.numeroAutorizacion }}</dd></div>
+          <div><dt>Estado</dt><dd><app-status-badge [status]="item.estado" /></dd></div>
+          <div>
+            <dt>No. Autorizacion</dt>
+            <dd class="mono">{{ item.estado === 'AUTORIZADO' && item.numeroAutorizacion ? item.numeroAutorizacion : 'Sin autorizacion' }}</dd>
+          </div>
           <div><dt>Ambiente</dt><dd>{{ item.ambiente }}</dd></div>
-          <div><dt>Fecha Autorizacion</dt><dd>{{ item.fechaAutorizacion }}</dd></div>
+          <div><dt>Fecha Autorizacion</dt><dd>{{ item.estado === 'AUTORIZADO' && item.fechaAutorizacion ? item.fechaAutorizacion : 'Sin autorizacion' }}</dd></div>
         </dl>
       </article>
 
@@ -104,8 +108,28 @@
             <p>Linea de tiempo operativa</p>
           </div>
         </div>
-        <app-timeline [items]="timeline" />
+        <app-timeline [items]="timeline()" />
       </article>
+
+      @if (item.mensajesSri.length) {
+        <article class="card sri-messages">
+          <div class="section-title">
+            <div>
+              <h2>Mensajes SRI</h2>
+              <p>Respuesta tecnica del ambiente {{ item.ambiente }}</p>
+            </div>
+            <span class="material-symbols-outlined">report</span>
+          </div>
+          @for (message of item.mensajesSri; track message.id) {
+            <div class="sri-message">
+              <strong>{{ message.codigo }} - {{ message.mensaje }}</strong>
+              @if (message.informacionAdicional) {
+                <small>{{ message.informacionAdicional }}</small>
+              }
+            </div>
+          }
+        </article>
+      }
 
       <article class="card notification-card">
         <div class="section-title">

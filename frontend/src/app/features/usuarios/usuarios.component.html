@@ -2,17 +2,68 @@
   title="Usuarios y Roles"
   subtitle="Control de accesos para operacion contable y administracion fiscal."
   icon="manage_accounts"
-  actionLabel="Nuevo Usuario"
-  actionIcon="person_add"
-  actionLink="/usuarios"
 />
 
+@if (feedback(); as message) {
+  <p class="feedback" [class]="'feedback feedback--' + message.tone">{{ message.message }}</p>
+}
+
 <section class="stats-grid">
-  <app-metric-card title="Usuarios Activos" value="18" icon="group" tone="success" />
-  <app-metric-card title="Roles" value="3" icon="admin_panel_settings" tone="primary" />
-  <app-metric-card title="MFA Activo" value="94%" icon="security" tone="success" />
-  <app-metric-card title="Bloqueos" value="0" icon="lock" tone="neutral" />
+  <app-metric-card title="Usuarios Activos" [value]="activeUsers()" icon="group" tone="success" />
+  <app-metric-card title="Roles" [value]="roleCount()" icon="admin_panel_settings" tone="primary" />
+  <app-metric-card title="Usuarios Totales" [value]="users().length.toString()" icon="manage_accounts" tone="neutral" />
+  <app-metric-card title="Bloqueos" [value]="blockedUsers()" icon="lock" tone="neutral" />
 </section>
+
+@if (showForm()) {
+  <section class="card user-form" [formGroup]="userForm">
+    <div class="section-title">
+      <div>
+        <h2>{{ editingId() ? 'Editar Usuario' : 'Nuevo Usuario' }}</h2>
+        <p>Cuentas reales guardadas en el backend.</p>
+      </div>
+    </div>
+    <div class="form-grid">
+      <div class="field">
+        <label for="fullName">Nombre</label>
+        <input id="fullName" formControlName="fullName" />
+      </div>
+      <div class="field">
+        <label for="username">Username</label>
+        <input id="username" formControlName="username" />
+      </div>
+      <div class="field">
+        <label for="email">Correo</label>
+        <input id="email" type="email" formControlName="email" />
+      </div>
+      <div class="field">
+        <label for="password">Contrasena</label>
+        <input id="password" type="password" formControlName="password" [placeholder]="editingId() ? 'Dejar vacia para conservar' : ''" />
+      </div>
+      <div class="field">
+        <label for="role">Rol</label>
+        <select id="role" formControlName="role">
+          <option value="ADMIN">Administrador</option>
+          <option value="EMISOR">Emisor</option>
+          <option value="CONTABILIDAD">Contabilidad</option>
+          <option value="CONSULTA">Consulta</option>
+          <option value="SOPORTE">Soporte</option>
+        </select>
+      </div>
+      <label class="check-card">
+        <input type="checkbox" formControlName="active" />
+        Usuario activo
+      </label>
+    </div>
+    <footer class="form-actions">
+      <button class="btn btn--secondary" type="button" (click)="cancelForm()">Cancelar</button>
+      <button class="btn btn--primary" type="button" (click)="saveUser()" [disabled]="saving()">
+        <span class="material-symbols-outlined">save</span>
+        {{ saving() ? 'Guardando...' : 'Guardar Usuario' }}
+      </button>
+    </footer>
+  </section>
+}
 
 <section class="users-grid">
   <article class="table-shell">
@@ -21,6 +72,10 @@
         <h2>Usuarios</h2>
         <p>Cuentas registradas en FactuEC</p>
       </div>
+      <button class="btn btn--primary" type="button" (click)="newUser()">
+        <span class="material-symbols-outlined">person_add</span>
+        Nuevo Usuario
+      </button>
     </div>
     <div class="table-scroll">
       <table class="data-table">
@@ -45,9 +100,19 @@
               <td><app-status-badge [status]="user.status" /></td>
               <td>
                 <span class="actions">
-                  <button class="icon-button" type="button" aria-label="Editar"><span class="material-symbols-outlined">edit</span></button>
-                  <button class="icon-button" type="button" aria-label="Permisos"><span class="material-symbols-outlined">vpn_key</span></button>
+                  <button class="icon-button" type="button" aria-label="Editar" (click)="editUser(user)">
+                    <span class="material-symbols-outlined">edit</span>
+                  </button>
+                  <button class="icon-button" type="button" aria-label="Inactivar" (click)="deactivateUser(user)">
+                    <span class="material-symbols-outlined">block</span>
+                  </button>
                 </span>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="5">
+                <p class="empty-state">No hay usuarios registrados en el backend.</p>
               </td>
             </tr>
           }

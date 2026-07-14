@@ -1,23 +1,52 @@
-import { Injectable } from '@angular/core';
-import { Observable, delay, map, of } from 'rxjs';
+import { Injectable, inject } from '@angular/core';
+import { Observable, forkJoin, map } from 'rxjs';
 
-import { Comprobante } from '../models/factuec.models';
-import { COMPROBANTES } from './mock-data';
+import { Comprobante, EntityId } from '../models/factuec.models';
+import { ApiService } from './api.service';
+import { ComprobanteResponseDto } from './backend-api.models';
+import { mapComprobante } from './backend-mappers';
+import { ClientesService } from './clientes.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ComprobantesService {
+  private readonly apiService = inject(ApiService);
+  private readonly clientesService = inject(ClientesService);
+
   list(): Observable<Comprobante[]> {
-    return of(COMPROBANTES).pipe(delay(160));
+    return forkJoin({
+      comprobantes: this.apiService.get<ComprobanteResponseDto[]>('/comprobantes'),
+      clientes: this.clientesService.list()
+    }).pipe(map(({ comprobantes, clientes }) => comprobantes.map((comprobante) => mapComprobante(comprobante, clientes))));
   }
 
-  getById(id: number): Observable<Comprobante | undefined> {
-    return this.list().pipe(map((items) => items.find((item) => item.id === id)));
+  getById(id: EntityId): Observable<Comprobante | undefined> {
+    return forkJoin({
+      comprobante: this.apiService.get<ComprobanteResponseDto>(`/comprobantes/${id}`),
+      clientes: this.clientesService.list()
+    }).pipe(map(({ comprobante, clientes }) => mapComprobante(comprobante, clientes)));
   }
 
-  createDraft(payload: Partial<Comprobante>): Observable<Comprobante> {
-    const draft: Comprobante = { ...COMPROBANTES[0], ...payload, id: Date.now(), estado: 'BORRADOR' };
-    return of(draft).pipe(delay(250));
+  createDraft(payload: unknown): Observable<Comprobante> {
+    return forkJoin({
+      comprobante: this.apiService.post<ComprobanteResponseDto>('/comprobantes/facturas/borrador', payload),
+      clientes: this.clientesService.list()
+    }).pipe(map(({ comprobante, clientes }) => mapComprobante(comprobante, clientes)));
+  }
+
+  emitirFactura(payload: unknown): Observable<Comprobante> {
+    return forkJoin({
+      comprobante: this.apiService.post<ComprobanteResponseDto>('/comprobantes/facturas/emitir', payload),
+      clientes: this.clientesService.list()
+    }).pipe(map(({ comprobante, clientes }) => mapComprobante(comprobante, clientes)));
+  }
+
+  downloadRide(id: EntityId): Observable<Blob> {
+    return this.apiService.getBlob(`/comprobantes/${id}/ride`);
+  }
+
+  downloadXml(id: EntityId): Observable<Blob> {
+    return this.apiService.getBlob(`/comprobantes/${id}/xml`);
   }
 }

@@ -98,6 +98,29 @@
   gap: 14px;
 }
 
+.sri-messages {
+  display: grid;
+  gap: 12px;
+}
+
+.sri-message {
+  display: grid;
+  gap: 6px;
+  border: 1px solid rgba(239, 68, 68, 0.22);
+  border-radius: 8px;
+  background: rgba(239, 68, 68, 0.06);
+  padding: 12px;
+}
+
+.sri-message strong {
+  color: #b91c1c;
+}
+
+.sri-message small {
+  color: var(--color-muted);
+  line-height: 1.45;
+}
+
 .notification-card > div:not(.section-title) {
   display: grid;
   gap: 5px;

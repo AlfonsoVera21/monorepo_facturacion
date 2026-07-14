@@ -40,6 +40,18 @@ body {
   font-size: 14px;
 }
 
+p-select,
+p-datepicker,
+p-inputnumber {
+  display: block;
+  width: 100%;
+  min-width: 0;
+}
+
+.p-component {
+  font-size: 14px;
+}
+
 button,
 input,
 select,
@@ -241,6 +253,88 @@ a {
 .field input:focus,
 .field select:focus,
 .field textarea:focus {
+  border-color: var(--color-action);
+  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.2);
+}
+
+.field .prime-control,
+.field .p-select,
+.field .p-datepicker,
+.field .p-inputnumber,
+.field .p-inputtext {
+  width: 100%;
+  min-width: 0;
+}
+
+.field .p-select,
+.field .p-datepicker-input,
+.field .p-inputnumber-input,
+.field .p-inputtext {
+  min-height: 38px;
+  border-color: var(--color-border);
+  border-radius: 8px;
+  color: var(--color-text);
+  font-size: 14px;
+  line-height: 1.25;
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.field .p-select {
+  display: flex;
+  height: 38px;
+  align-items: center;
+}
+
+.field .p-datepicker,
+.field .p-inputnumber {
+  display: flex;
+  height: 38px;
+  align-items: stretch;
+}
+
+.field .p-select-label,
+.field .p-inputnumber-input,
+.field .p-datepicker-input,
+.field .p-inputtext {
+  overflow: hidden;
+  padding-block: 8px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.field .p-select-label {
+  min-width: 0;
+  padding-inline: 10px 6px;
+}
+
+.field .p-select-dropdown {
+  flex: 0 0 34px;
+  width: 34px;
+}
+
+.field .p-datepicker-dropdown {
+  flex: 0 0 38px;
+  width: 38px;
+}
+
+.field .p-inputnumber-input,
+.field .p-datepicker-input,
+.field .p-inputtext {
+  width: 100%;
+  padding-inline: 10px;
+}
+
+.field .p-select:not(.p-disabled):hover,
+.field .p-datepicker-input:hover,
+.field .p-inputnumber-input:hover,
+.field .p-inputtext:hover {
+  border-color: var(--color-outline);
+}
+
+.field .p-select.p-focus,
+.field .p-datepicker-input:focus,
+.field .p-inputnumber-input:focus,
+.field .p-inputtext:focus {
   border-color: var(--color-action);
   box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.2);
 }

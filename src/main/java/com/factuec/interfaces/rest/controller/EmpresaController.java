@@ -28,25 +28,25 @@ public class EmpresaController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN','SOPORTE','CONTABILIDAD','CONSULTA')")
+    @PreAuthorize("hasAnyRole('ADMIN','EMISOR','SOPORTE','CONTABILIDAD','CONSULTA')")
     ApiResponse<List<EmpresaResponse>> list() {
         return ApiResponse.ok(empresaUseCase.list());
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADMIN','SOPORTE')")
+    @PreAuthorize("hasAnyRole('ADMIN','EMISOR','SOPORTE','CONTABILIDAD')")
     ApiResponse<EmpresaResponse> create(@Valid @RequestBody EmpresaRequest request) {
         return ApiResponse.ok("Empresa creada", empresaUseCase.create(request));
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN','SOPORTE','CONTABILIDAD','CONSULTA')")
+    @PreAuthorize("hasAnyRole('ADMIN','EMISOR','SOPORTE','CONTABILIDAD','CONSULTA')")
     ApiResponse<EmpresaResponse> get(@PathVariable UUID id) {
         return ApiResponse.ok(empresaUseCase.get(id));
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN','SOPORTE')")
+    @PreAuthorize("hasAnyRole('ADMIN','EMISOR','SOPORTE','CONTABILIDAD')")
     ApiResponse<EmpresaResponse> update(@PathVariable UUID id, @Valid @RequestBody EmpresaRequest request) {
         return ApiResponse.ok("Empresa actualizada", empresaUseCase.update(id, request));
     }

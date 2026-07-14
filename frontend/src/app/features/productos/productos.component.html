@@ -2,27 +2,90 @@
   title="Productos y Servicios"
   subtitle="Administra el catalogo de items para facturacion electronica."
   icon="inventory_2"
-  actionLabel="Nuevo Producto"
-  actionIcon="add"
-  actionLink="/productos"
 />
 
+@if (feedback(); as message) {
+  <p class="feedback" [class]="'feedback feedback--' + message.tone">{{ message.message }}</p>
+}
+
 <section class="stats-grid">
-  <app-metric-card title="Total Items" value="1,284" icon="inventory_2" trend="+4.5%" tone="primary" />
-  <app-metric-card title="Servicios" value="432" icon="category" tone="neutral" />
-  <app-metric-card title="Venta Mes Prom." value="$12,450" icon="payments" tone="success" />
-  <app-metric-card title="Stock Bajo" value="12" icon="warning" tone="warning" />
+  <app-metric-card title="Total Items" [value]="totalItems()" icon="inventory_2" tone="primary" />
+  <app-metric-card title="Servicios" [value]="servicios()" icon="category" tone="neutral" />
+  <app-metric-card title="Activos" [value]="productosActivos()" icon="verified" tone="success" />
+  <app-metric-card title="Stock Total" [value]="stockTotal()" icon="inventory" tone="warning" />
 </section>
 
 <section class="catalog-tabs">
   <button class="chip is-active" type="button">Todos</button>
   <button class="chip" type="button">Productos</button>
   <button class="chip" type="button">Servicios</button>
-  <button class="btn btn--secondary" type="button">
-    <span class="material-symbols-outlined">filter_list</span>
-    Filtros Avanzados
+  <span class="toolbar-spacer"></span>
+  <button class="btn btn--primary" type="button" (click)="newProducto()">
+    <span class="material-symbols-outlined">add</span>
+    Nuevo Producto
   </button>
 </section>
+
+@if (showForm()) {
+  <section class="card product-form" [formGroup]="productoForm">
+    <div class="section-title">
+      <div>
+        <h2>{{ editingId() ? 'Editar Item' : 'Nuevo Item' }}</h2>
+        <p>Producto o servicio disponible para facturar.</p>
+      </div>
+    </div>
+    <div class="form-grid">
+      <div class="field">
+        <label for="codigoPrincipal">Codigo</label>
+        <input id="codigoPrincipal" formControlName="codigoPrincipal" />
+      </div>
+      <div class="field">
+        <label for="tipo">Tipo</label>
+        <select id="tipo" formControlName="tipo">
+          <option value="SERVICIO">Servicio</option>
+          <option value="PRODUCTO">Producto</option>
+        </select>
+      </div>
+      <div class="field field--span-2">
+        <label for="nombre">Nombre</label>
+        <input id="nombre" formControlName="nombre" />
+      </div>
+      <div class="field field--span-2">
+        <label for="descripcion">Descripcion</label>
+        <input id="descripcion" formControlName="descripcion" />
+      </div>
+      <div class="field">
+        <label for="precioUnitario">Precio Unitario</label>
+        <input id="precioUnitario" type="number" min="0" step="0.01" formControlName="precioUnitario" />
+      </div>
+      <div class="field">
+        <label for="tarifaIva">IVA</label>
+        <select id="tarifaIva" formControlName="tarifaIva">
+          <option value="IVA_15">15%</option>
+          <option value="IVA_12">12%</option>
+          <option value="IVA_0">0%</option>
+          <option value="NO_OBJETO_IVA">No objeto</option>
+          <option value="EXENTO_IVA">Exento</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="stock">Stock</label>
+        <input id="stock" type="number" min="0" step="0.01" formControlName="stock" />
+      </div>
+      <div class="field">
+        <label for="categoria">Categoria</label>
+        <input id="categoria" formControlName="categoria" />
+      </div>
+    </div>
+    <footer class="form-actions">
+      <button class="btn btn--secondary" type="button" (click)="cancelForm()">Cancelar</button>
+      <button class="btn btn--primary" type="button" (click)="saveProducto()" [disabled]="saving()">
+        <span class="material-symbols-outlined">save</span>
+        {{ saving() ? 'Guardando...' : 'Guardar Item' }}
+      </button>
+    </footer>
+  </section>
+}
 
 <section class="table-shell">
   <div class="table-scroll">
@@ -33,6 +96,7 @@
           <th>Nombre del Item</th>
           <th>Tipo</th>
           <th>Precio Unit.</th>
+          <th>Stock</th>
           <th>IVA</th>
           <th>Estado</th>
           <th>Acciones</th>
@@ -48,13 +112,24 @@
             </td>
             <td>{{ producto.tipo }}</td>
             <td class="mono">${{ producto.precioUnitario.toFixed(2) }}</td>
+            <td class="mono stock-cell">{{ formatStock(producto.stock) }}</td>
             <td>{{ producto.tarifaIva }}</td>
             <td><app-status-badge [status]="producto.estado" /></td>
             <td>
               <span class="actions">
-                <button class="icon-button" type="button" aria-label="Editar"><span class="material-symbols-outlined">edit</span></button>
-                <button class="icon-button" type="button" aria-label="Eliminar"><span class="material-symbols-outlined">delete</span></button>
+                <button class="icon-button" type="button" aria-label="Editar" (click)="editProducto(producto)">
+                  <span class="material-symbols-outlined">edit</span>
+                </button>
+                <button class="icon-button" type="button" aria-label="Inactivar" (click)="deleteProducto(producto)">
+                  <span class="material-symbols-outlined">delete</span>
+                </button>
               </span>
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="8">
+              <p class="empty-state">No hay productos o servicios. Crea uno para poder emitir facturas.</p>
             </td>
           </tr>
         }
@@ -69,6 +144,5 @@
     <h2>Importacion Masiva de Productos</h2>
     <p>Ahorra tiempo importando productos y servicios desde una plantilla estandarizada.</p>
   </div>
-  <button class="btn btn--primary" type="button">Cargar Archivo</button>
-  <button class="btn btn--secondary" type="button">Descargar Plantilla</button>
+  <button class="btn btn--primary" type="button" (click)="newProducto()">Crear Manual</button>
 </aside>

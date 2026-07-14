@@ -30,6 +30,41 @@
   gap: 20px;
 }
 
+.feedback {
+  margin: 0 0 16px;
+  border: 1px solid var(--feedback-border, var(--color-border));
+  border-radius: 8px;
+  background: var(--feedback-bg, #fff);
+  color: var(--feedback-color, var(--color-text));
+  padding: 12px 14px;
+  font-weight: 800;
+}
+
+.feedback--success {
+  --feedback-bg: rgba(16, 185, 129, 0.08);
+  --feedback-border: rgba(16, 185, 129, 0.24);
+  --feedback-color: #047857;
+}
+
+.feedback--danger {
+  --feedback-bg: rgba(239, 68, 68, 0.08);
+  --feedback-border: rgba(239, 68, 68, 0.24);
+  --feedback-color: #dc2626;
+}
+
+.feedback--warning {
+  --feedback-bg: rgba(245, 158, 11, 0.1);
+  --feedback-border: rgba(245, 158, 11, 0.26);
+  --feedback-color: #b45309;
+}
+
+.card-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 16px;
+}
+
 .check-card {
   display: flex;
   align-items: center;
@@ -110,6 +145,61 @@
   font-weight: 800;
 }
 
+.inline-form {
+  display: grid;
+  grid-template-columns: 96px minmax(160px, 1fr) minmax(240px, 1.4fr) auto auto;
+  gap: 12px;
+  align-items: end;
+  border-top: 1px solid var(--color-border);
+  background: #f8fafc;
+  padding: 16px 20px;
+}
+
+.inline-form--point {
+  grid-template-columns: 110px minmax(180px, 1fr) 150px auto auto;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: #fff;
+  padding: 14px;
+}
+
+.inline-form .field,
+.inline-form .field--wide {
+  min-width: 0;
+}
+
+.check-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 42px;
+  color: var(--color-muted);
+  font-weight: 800;
+}
+
+.check-inline input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--color-action);
+}
+
+.inline-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.point-form-row td {
+  background: #f8fafc;
+}
+
+.empty-state {
+  margin: 0;
+  color: var(--color-muted);
+  font-weight: 800;
+  padding: 12px 0;
+}
+
 .sri-config {
   display: grid;
   gap: 16px;
@@ -129,7 +219,14 @@
 
 @media (max-width: 640px) {
   .table-shell__header,
-  .sri-config footer {
+  .sri-config footer,
+  .card-actions,
+  .inline-actions {
     display: grid;
+  }
+
+  .inline-form,
+  .inline-form--point {
+    grid-template-columns: 1fr;
   }
 }

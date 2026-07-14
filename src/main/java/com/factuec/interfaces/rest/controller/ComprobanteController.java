@@ -98,6 +98,12 @@ public class ComprobanteController {
     @PreAuthorize("hasAnyRole('ADMIN','EMISOR','CONTABILIDAD')")
     ApiResponse<Void> enviarCorreo(@PathVariable UUID id) {
         comprobanteUseCase.enviarCorreo(id);
-        return ApiResponse.ok("Correo enviado", null);
+        return ApiResponse.ok("Envio de correo procesado", null);
+    }
+
+    @PostMapping("/correos/pendientes/procesar")
+    @PreAuthorize("hasAnyRole('ADMIN','EMISOR','CONTABILIDAD','SOPORTE')")
+    ApiResponse<Integer> procesarCorreosPendientes() {
+        return ApiResponse.ok("Correos pendientes procesados", comprobanteUseCase.procesarCorreosPendientes());
     }
 }

@@ -12,36 +12,32 @@
 <form class="card filters comprobantes-filters" [formGroup]="filtersForm">
   <div class="field">
     <label for="fechaDesde">Rango de fechas</label>
-    <input id="fechaDesde" type="date" formControlName="fechaDesde" />
+    <p-datepicker
+      inputId="fechaDesde"
+      formControlName="fechaDesde"
+      dateFormat="yy-mm-dd"
+      dataType="string"
+      [showIcon]="true"
+      styleClass="prime-control"
+    />
   </div>
   <div class="field">
     <label for="cliente">Cliente</label>
-    <input id="cliente" type="search" formControlName="cliente" placeholder="Buscar cliente" />
+    <input id="cliente" pInputText type="search" formControlName="cliente" placeholder="Buscar cliente" />
   </div>
   <div class="field">
     <label for="tipo">Tipo</label>
-    <select id="tipo" formControlName="tipo">
-      <option value="TODOS">Todos los tipos</option>
-      <option value="FACTURA">Factura</option>
-      <option value="NOTA_CREDITO">Nota de Credito</option>
-      <option value="RETENCION">Retencion</option>
-    </select>
+    <p-select inputId="tipo" formControlName="tipo" [options]="tipoOptions" optionLabel="label" optionValue="value" styleClass="prime-control" />
   </div>
   <div class="field">
     <label for="estado">Estado SRI</label>
-    <select id="estado" formControlName="estado">
-      <option value="TODOS">Todos los estados</option>
-      <option value="AUTORIZADO">Autorizado</option>
-      <option value="ENVIADO">En procesamiento</option>
-      <option value="RECHAZADO">Rechazado</option>
-      <option value="DEVUELTO">Devuelto</option>
-    </select>
+    <p-select inputId="estado" formControlName="estado" [options]="estadoOptions" optionLabel="label" optionValue="value" styleClass="prime-control" />
   </div>
-  <button class="btn btn--primary" type="button">
+  <button class="btn btn--primary" type="button" (click)="applyFilters()">
     <span class="material-symbols-outlined">filter_alt</span>
     Filtrar
   </button>
-  <button class="btn btn--secondary" type="button" aria-label="Limpiar filtros">
+  <button class="btn btn--secondary" type="button" aria-label="Limpiar filtros" (click)="clearFilters()">
     <span class="material-symbols-outlined">filter_alt_off</span>
   </button>
 </form>
@@ -62,7 +58,7 @@
         </tr>
       </thead>
       <tbody>
-        @for (comprobante of comprobantes(); track comprobante.id) {
+        @for (comprobante of pageItems(); track comprobante.id) {
           <tr>
             <td>{{ comprobante.fechaEmision }}</td>
             <td>{{ typeLabel(comprobante.tipo) }}</td>
@@ -76,10 +72,10 @@
                 <a class="icon-button" [routerLink]="['/comprobantes', comprobante.id]" aria-label="Ver comprobante">
                   <span class="material-symbols-outlined">visibility</span>
                 </a>
-                <button class="icon-button" type="button" aria-label="Descargar RIDE">
+                <button class="icon-button" type="button" aria-label="Descargar RIDE" (click)="openRide(comprobante)">
                   <span class="material-symbols-outlined">picture_as_pdf</span>
                 </button>
-                <button class="icon-button" type="button" aria-label="Descargar XML">
+                <button class="icon-button" type="button" aria-label="Descargar XML" (click)="downloadXml(comprobante)">
                   <span class="material-symbols-outlined">code</span>
                 </button>
                 <button class="icon-button" type="button" aria-label="Enviar por correo">
@@ -88,25 +84,37 @@
               </span>
             </td>
           </tr>
+        } @empty {
+          <tr>
+            <td colspan="8">
+              <p class="empty-state">No hay comprobantes registrados en el backend para los filtros seleccionados.</p>
+            </td>
+          </tr>
         }
       </tbody>
     </table>
   </div>
   <footer class="list-footer">
-    <span>Mostrando 1 a {{ comprobantes().length }} de 124 comprobantes</span>
-    <div>
-      <button class="icon-button" type="button" aria-label="Anterior"><span class="material-symbols-outlined">chevron_left</span></button>
-      <button class="pager is-active" type="button">1</button>
-      <button class="pager" type="button">2</button>
-      <button class="pager" type="button">3</button>
-      <button class="icon-button" type="button" aria-label="Siguiente"><span class="material-symbols-outlined">chevron_right</span></button>
-    </div>
+    <span>Mostrando {{ showingFrom() }} a {{ showingTo() }} de {{ totalItems() }} comprobantes</span>
+    @if (totalItems() > 0) {
+      <div>
+        <button class="icon-button" type="button" aria-label="Anterior" (click)="goToPage(currentPage() - 1)" [disabled]="currentPage() === 1">
+          <span class="material-symbols-outlined">chevron_left</span>
+        </button>
+        @for (page of pageNumbers(); track page) {
+          <button class="pager" [class.is-active]="page === currentPage()" type="button" (click)="goToPage(page)">{{ page }}</button>
+        }
+        <button class="icon-button" type="button" aria-label="Siguiente" (click)="goToPage(currentPage() + 1)" [disabled]="currentPage() === totalPages()">
+          <span class="material-symbols-outlined">chevron_right</span>
+        </button>
+      </div>
+    }
   </footer>
 </section>
 
 <section class="stats-grid comprobantes-summary">
-  <app-metric-card title="Autorizados Hoy" value="24" icon="task_alt" tone="success" />
-  <app-metric-card title="Rechazados" value="2" icon="error" tone="danger" />
-  <app-metric-card title="Ventas Mes" value="$12.4k" icon="payments" tone="primary" />
-  <app-metric-card title="Saldo Prepago" value="542 Docs" icon="inventory" tone="neutral" />
+  <app-metric-card title="Autorizados Hoy" [value]="autorizadosHoy()" icon="task_alt" tone="success" />
+  <app-metric-card title="Rechazados" [value]="rechazados()" icon="error" tone="danger" />
+  <app-metric-card title="Ventas Mes" [value]="ventasMes()" icon="payments" tone="primary" />
+  <app-metric-card title="Total Documentos" [value]="totalDocumentos()" icon="inventory" tone="neutral" />
 </section>

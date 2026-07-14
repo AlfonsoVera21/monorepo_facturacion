@@ -16,15 +16,24 @@ export class ConfiguracionComponent implements OnInit {
   private readonly formBuilder = inject(FormBuilder);
 
   protected readonly settingsForm = this.formBuilder.nonNullable.group({
-    serieDefault: ['001-001'],
-    ambiente: ['PRODUCCION'],
-    correoNotificaciones: ['notificaciones@soltec.ec'],
-    enviarRideAutomatico: [true],
-    reintentosSri: ['3'],
-    mfaObligatorio: [true]
+    serieDefault: [''],
+    ambiente: ['PRUEBAS'],
+    correoNotificaciones: [''],
+    enviarRideAutomatico: [false],
+    reintentosSri: [''],
+    mfaObligatorio: [false]
   });
 
   ngOnInit(): void {
-    this.configuracionService.getGeneralSettings().subscribe((settings) => this.settingsForm.patchValue(settings));
+    this.configuracionService.getGeneralSettings().subscribe((settings) => {
+      this.settingsForm.patchValue({
+        serieDefault: settings.serieDefault,
+        ambiente: settings.ambiente,
+        correoNotificaciones: settings.correoNotificaciones,
+        enviarRideAutomatico: settings.enviarRideAutomatico,
+        reintentosSri: settings.reintentosSri,
+        mfaObligatorio: settings.mfaObligatorio
+      });
+    });
   }
 }

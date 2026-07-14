@@ -1,5 +1,6 @@
 package com.factuec.interfaces.rest.controller;
 
+import com.factuec.application.dto.firma.CertificadoDisponibleResponse;
 import com.factuec.application.dto.firma.FirmaElectronicaRequest;
 import com.factuec.application.dto.firma.FirmaElectronicaResponse;
 import com.factuec.application.usecase.FirmaElectronicaUseCase;
@@ -37,6 +38,12 @@ public class FirmaElectronicaController {
     @PreAuthorize("hasAnyRole('ADMIN','EMISOR','CONTABILIDAD','SOPORTE')")
     ApiResponse<List<FirmaElectronicaResponse>> findByEmpresa(@PathVariable UUID empresaId) {
         return ApiResponse.ok(firmaUseCase.findByEmpresa(empresaId));
+    }
+
+    @GetMapping("/certificados")
+    @PreAuthorize("hasAnyRole('ADMIN','EMISOR','CONTABILIDAD','SOPORTE')")
+    ApiResponse<List<CertificadoDisponibleResponse>> certificadosDisponibles() {
+        return ApiResponse.ok(firmaUseCase.listCertificadosDisponibles());
     }
 
     @PutMapping("/{id}")

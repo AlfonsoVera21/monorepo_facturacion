@@ -1,34 +1,56 @@
 <app-page-header
   title="Firma Electronica"
-  subtitle="Administracion del certificado digital .p12 usado para firmar XML."
+  subtitle="Certificado digital .p12 usado para firmar XML en ambiente de pruebas."
   icon="verified_user"
 />
+
+@if (feedback(); as message) {
+  <p class="feedback" [class]="'feedback feedback--' + message.tone">{{ message.message }}</p>
+}
 
 <section class="signature-grid" [formGroup]="firmaForm">
   <article class="card upload-panel">
     <span class="material-symbols-outlined">upload_file</span>
-    <h2>Certificado Digital (.p12)</h2>
-    <p>Archivo actual: {{ firma()?.archivoNombre }}</p>
-    <button class="btn btn--primary" type="button">Subir nueva firma</button>
+    <h2>Certificado en Docker</h2>
+    <p>Archivo actual: {{ firma()?.archivoNombre || 'Sin firma registrada' }}</p>
+    <small>Coloca el .p12/.pfx en storage/certificates y aparecera aqui.</small>
   </article>
 
   <article class="card stack">
     <div class="section-title">
       <div>
-        <h2>Credenciales de Firma</h2>
-        <p>La contrasena real debe resolverse desde backend o secreto seguro.</p>
+        <h2>Registro de Firma</h2>
+        <p>La clave se lee en backend desde la variable FIRMA_ELECTRONICA_PASSWORD.</p>
       </div>
     </div>
     <div class="form-grid">
       <div class="field">
-        <label for="password">Contrasena de Firma</label>
-        <input id="password" type="password" formControlName="password" />
+        <label for="rutaSegura">Certificado disponible</label>
+        <select id="rutaSegura" formControlName="rutaSegura" (change)="selectCertificado($any($event.target).value)">
+          @for (certificado of certificados(); track certificado.rutaSegura) {
+            <option [value]="certificado.rutaSegura">{{ certificado.nombreArchivo }}</option>
+          }
+        </select>
       </div>
       <div class="field">
-        <label for="passwordRef">Referencia de Secreto</label>
+        <label for="nombreArchivo">Nombre de Archivo</label>
+        <input id="nombreArchivo" formControlName="nombreArchivo" />
+      </div>
+      <div class="field">
+        <label for="passwordRef">Referencia del Secreto</label>
         <input id="passwordRef" formControlName="passwordRef" />
       </div>
+      <div class="field">
+        <label for="fechaVencimiento">Vencimiento</label>
+        <input id="fechaVencimiento" type="date" formControlName="fechaVencimiento" />
+      </div>
     </div>
+    <footer class="signature-actions">
+      <button class="btn btn--primary" type="button" (click)="saveFirma()" [disabled]="saving() || !certificados().length">
+        <span class="material-symbols-outlined">verified_user</span>
+        {{ saving() ? 'Validando...' : firma() ? 'Actualizar Firma' : 'Registrar Firma' }}
+      </button>
+    </footer>
   </article>
 
   @if (firma(); as item) {
@@ -50,10 +72,10 @@
   }
 
   <app-alert-card
-    tone="success"
+    tone="warning"
     icon="security"
-    title="Perfil protegido"
-    description="MFA activo y registro de auditoria habilitado para cambios fiscales."
+    title="Ambiente de pruebas"
+    description="Para autorizar en SRI pruebas, la empresa debe estar creada con ambiente PRUEBAS y el RUC debe estar habilitado por el SRI."
   />
 
   <article class="table-shell signature-history">
@@ -82,6 +104,12 @@
               <td>{{ log.accion }}</td>
               <td>{{ log.descripcion }}</td>
               <td class="mono">{{ log.ip }}</td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="5">
+                <p class="empty-state">No hay cambios registrados en el backend.</p>
+              </td>
             </tr>
           }
         </tbody>

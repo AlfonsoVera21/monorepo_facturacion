@@ -2,9 +2,13 @@
 
 <app-page-header
   title="Emision de Factura"
-  subtitle="Formulario reactivo listo para conectar con el endpoint de borrador o emision."
+  subtitle="Emite, firma y envia al ambiente de pruebas del SRI."
   icon="receipt_long"
 />
+
+@if (feedback(); as message) {
+  <p class="feedback" [class]="'feedback feedback--' + message.tone">{{ message.message }}</p>
+}
 
 <form class="invoice-layout" [formGroup]="facturaForm">
   <section class="card stack">
@@ -16,22 +20,51 @@
     </div>
     <div class="form-grid">
       <div class="field">
-        <label for="secuencial">Secuencial</label>
-        <input id="secuencial" formControlName="secuencial" />
+        <label for="establecimientoId">Establecimiento</label>
+        <p-select
+          inputId="establecimientoId"
+          formControlName="establecimientoId"
+          [options]="establecimientoOptions()"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Seleccione establecimiento"
+          styleClass="prime-control"
+          (onChange)="selectEstablecimiento($event.value)"
+        />
+      </div>
+      <div class="field">
+        <label for="puntoEmisionId">Punto de Emision</label>
+        <p-select
+          inputId="puntoEmisionId"
+          formControlName="puntoEmisionId"
+          [options]="puntoEmisionOptions()"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Seleccione punto"
+          styleClass="prime-control"
+        />
       </div>
       <div class="field">
         <label for="fechaEmision">Fecha de Emision</label>
-        <input id="fechaEmision" type="date" formControlName="fechaEmision" />
+        <p-datepicker
+          inputId="fechaEmision"
+          formControlName="fechaEmision"
+          dateFormat="yy-mm-dd"
+          dataType="string"
+          [showIcon]="true"
+          styleClass="prime-control"
+        />
       </div>
       <div class="field">
         <label for="moneda">Tipo de Moneda</label>
-        <select id="moneda" formControlName="moneda">
-          <option value="USD">USD - Dolar Americano</option>
-        </select>
-      </div>
-      <div class="field">
-        <label for="guiaRemision">Guia de Remision</label>
-        <input id="guiaRemision" formControlName="guiaRemision" placeholder="Opcional" />
+        <p-select
+          inputId="moneda"
+          formControlName="moneda"
+          [options]="monedaOptions"
+          optionLabel="label"
+          optionValue="value"
+          styleClass="prime-control"
+        />
       </div>
     </div>
   </section>
@@ -42,28 +75,24 @@
         <h2>Datos del Cliente</h2>
         <p>Identificacion y correo para envio automatico</p>
       </div>
-      <button class="btn btn--secondary" type="button">
+      <a class="btn btn--secondary" routerLink="/clientes">
         <span class="material-symbols-outlined">person_add</span>
         Nuevo Cliente
-      </button>
+      </a>
     </div>
     <div class="field">
-      <label for="clienteBusqueda">Buscar cliente</label>
-      <input id="clienteBusqueda" formControlName="clienteBusqueda" />
-    </div>
-    <div class="form-grid">
-      <div class="field">
-        <label for="razonSocial">Razon Social</label>
-        <input id="razonSocial" formControlName="razonSocial" />
-      </div>
-      <div class="field">
-        <label for="identificacion">RUC / Cedula</label>
-        <input id="identificacion" formControlName="identificacion" />
-      </div>
-      <div class="field field--span-2">
-        <label for="correo">Correo Electronico</label>
-        <input id="correo" type="email" formControlName="correo" />
-      </div>
+      <label for="clienteId">Cliente</label>
+      <p-select
+        inputId="clienteId"
+        formControlName="clienteId"
+        [options]="clienteOptions()"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="Seleccione cliente"
+        styleClass="prime-control"
+        [filter]="true"
+        filterBy="label"
+      />
     </div>
   </section>
 
@@ -82,35 +111,48 @@
     <div class="invoice-items" formArrayName="detalles">
       @for (detalle of detalles.controls; track $index; let i = $index) {
         <div class="invoice-item" [formGroupName]="i">
-          <div class="field">
+          <div class="field invoice-item__catalog">
+            <label>Catalogo</label>
+            <p-select
+              formControlName="productoId"
+              [options]="productoOptions()"
+              optionLabel="label"
+              optionValue="value"
+              styleClass="prime-control"
+              [filter]="true"
+              filterBy="label"
+              (onChange)="selectProducto(i, $event.value)"
+            />
+          </div>
+          <div class="field invoice-item__code">
             <label>Codigo</label>
-            <input formControlName="codigo" />
+            <input pInputText formControlName="codigo" />
           </div>
           <div class="field invoice-item__description">
             <label>Descripcion</label>
-            <input formControlName="descripcion" />
+            <input pInputText formControlName="descripcion" />
           </div>
-          <div class="field">
+          <div class="field invoice-item__quantity">
             <label>Cant.</label>
-            <input type="number" min="0" step="0.01" formControlName="cantidad" />
+            <p-inputnumber formControlName="cantidad" [min]="0" [minFractionDigits]="2" [maxFractionDigits]="4" styleClass="prime-control" />
           </div>
-          <div class="field">
+          <div class="field invoice-item__price">
             <label>P. Unitario</label>
-            <input type="number" min="0" step="0.01" formControlName="precioUnitario" />
+            <p-inputnumber formControlName="precioUnitario" mode="currency" currency="USD" locale="en-US" [min]="0" [minFractionDigits]="2" [maxFractionDigits]="4" styleClass="prime-control" />
           </div>
-          <div class="field">
-            <label>Desc %</label>
-            <input type="number" min="0" max="100" step="1" formControlName="descuento" />
+          <div class="field invoice-item__discount">
+            <label>Desc $</label>
+            <p-inputnumber formControlName="descuento" mode="currency" currency="USD" locale="en-US" [min]="0" [minFractionDigits]="2" [maxFractionDigits]="2" styleClass="prime-control" />
           </div>
-          <div class="field">
+          <div class="field invoice-item__tax">
             <label>IVA</label>
-            <select formControlName="tarifaIva">
-              <option value="15%">15%</option>
-              <option value="12%">12%</option>
-              <option value="0%">0%</option>
-              <option value="EXENTO">Exento</option>
-              <option value="NO_OBJETO">No Objeto</option>
-            </select>
+            <p-select
+              formControlName="tarifaIva"
+              [options]="ivaOptions"
+              optionLabel="label"
+              optionValue="value"
+              styleClass="prime-control"
+            />
           </div>
           <button class="icon-button" type="button" (click)="removeItem(i)" aria-label="Eliminar item">
             <span class="material-symbols-outlined">delete</span>
@@ -130,21 +172,23 @@
       </div>
       <div class="field">
         <label for="formaPago">Forma de Pago</label>
-        <select id="formaPago" formControlName="formaPago">
-          <option>SIN UTILIZACION DEL SISTEMA FINANCIERO</option>
-          <option>OTROS CON UTILIZACION DEL SISTEMA FINANCIERO</option>
-          <option>TARJETA DE CREDITO</option>
-          <option>TRANSFERENCIA BANCARIA</option>
-        </select>
+        <p-select
+          inputId="formaPago"
+          formControlName="formaPago"
+          [options]="formaPagoOptions"
+          optionLabel="label"
+          optionValue="value"
+          styleClass="prime-control"
+        />
       </div>
       <div class="form-grid">
         <div class="field">
           <label for="valorPago">Valor</label>
-          <input id="valorPago" type="number" formControlName="valor" />
+          <p-inputnumber inputId="valorPago" formControlName="valor" mode="currency" currency="USD" locale="en-US" [min]="0" [minFractionDigits]="2" [maxFractionDigits]="2" styleClass="prime-control" />
         </div>
         <div class="field">
           <label for="plazoPago">Plazo</label>
-          <input id="plazoPago" type="number" formControlName="plazo" />
+          <p-inputnumber inputId="plazoPago" formControlName="plazo" [min]="0" [maxFractionDigits]="0" styleClass="prime-control" />
         </div>
       </div>
     </section>
@@ -161,17 +205,17 @@
       <div class="total-row"><span>IVA</span><strong>${{ iva().toFixed(2) }}</strong></div>
       <div class="total-row total-row--grand"><span>Total a Pagar</span><strong>${{ total().toFixed(2) }}</strong></div>
       <div class="invoice-actions">
-        <button class="btn btn--secondary" type="button">
+        <a class="btn btn--secondary" routerLink="/comprobantes">
+          <span class="material-symbols-outlined">arrow_back</span>
+          Volver
+        </a>
+        <button class="btn btn--secondary" type="button" (click)="saveDraft()" [disabled]="savingDraft() || emitting()">
           <span class="material-symbols-outlined">save</span>
-          Guardar Borrador
+          {{ savingDraft() ? 'Guardando...' : 'Guardar Borrador' }}
         </button>
-        <button class="btn btn--secondary" type="button">
-          <span class="material-symbols-outlined">visibility</span>
-          Previsualizar RIDE
-        </button>
-        <button class="btn btn--primary" type="button">
+        <button class="btn btn--primary" type="button" (click)="emitir()" [disabled]="emitting() || savingDraft()">
           <span class="material-symbols-outlined">send</span>
-          Emitir y Firmar
+          {{ emitting() ? 'Enviando...' : 'Emitir y Firmar' }}
         </button>
       </div>
     </section>

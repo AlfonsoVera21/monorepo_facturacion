@@ -4,6 +4,34 @@
   gap: 20px;
 }
 
+.feedback {
+  margin: 0 0 16px;
+  border: 1px solid var(--feedback-border, var(--color-border));
+  border-radius: 8px;
+  background: var(--feedback-bg, #fff);
+  color: var(--feedback-color, var(--color-text));
+  padding: 12px 14px;
+  font-weight: 800;
+}
+
+.feedback--success {
+  --feedback-bg: rgba(16, 185, 129, 0.08);
+  --feedback-border: rgba(16, 185, 129, 0.24);
+  --feedback-color: #047857;
+}
+
+.feedback--danger {
+  --feedback-bg: rgba(239, 68, 68, 0.08);
+  --feedback-border: rgba(239, 68, 68, 0.24);
+  --feedback-color: #dc2626;
+}
+
+.feedback--warning {
+  --feedback-bg: rgba(245, 158, 11, 0.1);
+  --feedback-border: rgba(245, 158, 11, 0.26);
+  --feedback-color: #b45309;
+}
+
 .upload-panel {
   display: grid;
   place-items: center;
@@ -23,6 +51,17 @@
 
 .upload-panel p {
   color: var(--color-muted);
+}
+
+.upload-panel small {
+  color: var(--color-muted);
+  line-height: 1.5;
+}
+
+.signature-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 16px;
 }
 
 .certificate-card,

@@ -1,18 +1,16 @@
-import { Injectable } from '@angular/core';
-import { Observable, delay, of } from 'rxjs';
+import { Injectable, inject } from '@angular/core';
+import { Observable } from 'rxjs';
+
+import { ApiService } from './api.service';
+import { ConfiguracionGeneralResponseDto } from './backend-api.models';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ConfiguracionService {
-  getGeneralSettings(): Observable<Record<string, string | boolean>> {
-    return of({
-      serieDefault: '001-001',
-      ambiente: 'PRODUCCION',
-      correoNotificaciones: 'notificaciones@soltec.ec',
-      enviarRideAutomatico: true,
-      reintentosSri: '3',
-      mfaObligatorio: true
-    }).pipe(delay(120));
+  private readonly apiService = inject(ApiService);
+
+  getGeneralSettings(): Observable<ConfiguracionGeneralResponseDto> {
+    return this.apiService.get<ConfiguracionGeneralResponseDto>('/configuracion/general');
   }
 }

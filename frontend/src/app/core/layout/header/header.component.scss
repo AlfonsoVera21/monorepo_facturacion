@@ -67,27 +67,44 @@
 }
 
 .topbar__user {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 12px;
 }
 
-.topbar__user div {
+.profile-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  padding: 0;
+}
+
+.profile-trigger > div {
   display: grid;
   text-align: right;
 }
 
-.topbar__user strong {
+.topbar__user strong,
+.profile-menu strong {
   color: var(--color-text);
   font-size: 13px;
 }
 
-.topbar__user span {
+.topbar__user span,
+.profile-menu span {
   color: var(--color-muted);
   font-size: 11px;
 }
 
 .avatar-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   width: 40px;
   height: 40px;
   border: 0;
@@ -96,6 +113,95 @@
   color: var(--color-primary);
   font-weight: 800;
   cursor: pointer;
+}
+
+.avatar-button--large {
+  width: 44px;
+  height: 44px;
+  flex: 0 0 auto;
+}
+
+.profile-trigger__chevron {
+  color: var(--color-muted);
+  transition: transform 160ms ease;
+}
+
+.topbar__user.is-open .profile-trigger__chevron {
+  transform: rotate(180deg);
+}
+
+.profile-menu-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 55;
+  border: 0;
+  background: transparent;
+  cursor: default;
+}
+
+.profile-menu {
+  position: absolute;
+  top: calc(100% + 12px);
+  right: 0;
+  z-index: 60;
+  width: min(300px, calc(100vw - 32px));
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: var(--shadow-dialog);
+}
+
+.profile-menu__identity {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.profile-menu__identity div {
+  display: grid;
+  min-width: 0;
+  text-align: left;
+}
+
+.profile-menu__identity strong,
+.profile-menu__identity span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.profile-menu button {
+  display: flex;
+  width: 100%;
+  min-height: 42px;
+  align-items: center;
+  gap: 10px;
+  border: 0;
+  background: #fff;
+  color: var(--color-text);
+  cursor: pointer;
+  padding: 10px 14px;
+  text-align: left;
+}
+
+.profile-menu button:hover {
+  background: var(--color-surface-low);
+}
+
+.profile-menu button .material-symbols-outlined {
+  color: var(--color-muted);
+}
+
+.profile-menu__danger {
+  border-top: 1px solid var(--color-border) !important;
+  color: var(--color-danger) !important;
+}
+
+.profile-menu__danger .material-symbols-outlined {
+  color: var(--color-danger) !important;
 }
 
 @keyframes pulse {
@@ -132,7 +238,12 @@
   }
 
   .sri-pill,
-  .topbar__user div {
+  .profile-trigger > div,
+  .profile-trigger__chevron {
     display: none;
+  }
+
+  .profile-menu {
+    right: -4px;
   }
 }

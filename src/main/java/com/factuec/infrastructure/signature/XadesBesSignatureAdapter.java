@@ -10,20 +10,6 @@ import java.security.PrivateKey;
 import java.security.cert.CertificateExpiredException;
 import java.security.cert.X509Certificate;
 import java.util.Collections;
-import javax.xml.crypto.dsig.CanonicalizationMethod;
-import javax.xml.crypto.dsig.DigestMethod;
-import javax.xml.crypto.dsig.Reference;
-import javax.xml.crypto.dsig.SignatureMethod;
-import javax.xml.crypto.dsig.SignedInfo;
-import javax.xml.crypto.dsig.Transform;
-import javax.xml.crypto.dsig.XMLSignature;
-import javax.xml.crypto.dsig.XMLSignatureFactory;
-import javax.xml.crypto.dsig.dom.DOMSignContext;
-import javax.xml.crypto.dsig.keyinfo.KeyInfo;
-import javax.xml.crypto.dsig.keyinfo.KeyInfoFactory;
-import javax.xml.crypto.dsig.keyinfo.X509Data;
-import javax.xml.crypto.dsig.spec.C14NMethodParameterSpec;
-import javax.xml.crypto.dsig.spec.TransformParameterSpec;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.TransformerFactory;
@@ -31,6 +17,19 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import org.springframework.stereotype.Service;
 import org.w3c.dom.Document;
+import org.apache.xml.security.signature.XMLSignature;
+import xades4j.algorithms.EnvelopedSignatureTransform;
+import xades4j.production.BasicSignatureOptions;
+import xades4j.production.DataObjectReference;
+import xades4j.production.SignatureAppendingStrategies;
+import xades4j.production.SignatureAlgorithms;
+import xades4j.production.SignedDataObjects;
+import xades4j.production.SigningCertificateMode;
+import xades4j.production.XadesBesSigningProfile;
+import xades4j.production.XadesSigner;
+import xades4j.properties.DataObjectDesc;
+import xades4j.properties.DataObjectFormatProperty;
+import xades4j.providers.impl.DirectKeyingDataProvider;
 
 @Service
 public class XadesBesSignatureAdapter implements SignaturePort {
@@ -50,26 +49,31 @@ public class XadesBesSignatureAdapter implements SignaturePort {
         try {
             Document document = parseXml(xml);
             KeyMaterial keyMaterial = loadKeyMaterial(config);
+            document.getDocumentElement().setIdAttribute("id", true);
 
-            XMLSignatureFactory factory = XMLSignatureFactory.getInstance("DOM");
-            Reference reference = factory.newReference(
-                    "",
-                    factory.newDigestMethod(DigestMethod.SHA256, null),
-                    Collections.singletonList(factory.newTransform(Transform.ENVELOPED, (TransformParameterSpec) null)),
-                    null,
-                    null);
-            SignedInfo signedInfo = factory.newSignedInfo(
-                    factory.newCanonicalizationMethod(CanonicalizationMethod.INCLUSIVE, (C14NMethodParameterSpec) null),
-                    factory.newSignatureMethod(SignatureMethod.RSA_SHA256, null),
-                    Collections.singletonList(reference));
+            DirectKeyingDataProvider keyingDataProvider =
+                    new DirectKeyingDataProvider(keyMaterial.certificate(), keyMaterial.privateKey());
+            BasicSignatureOptions signatureOptions = new BasicSignatureOptions()
+                    .includeSigningCertificate(SigningCertificateMode.SIGNING_CERTIFICATE)
+                    .includeIssuerSerial(true)
+                    .includeSubjectName(true)
+                    .includePublicKey(true)
+                    .signKeyInfo(true);
+            SignatureAlgorithms signatureAlgorithms = new SignatureAlgorithms()
+                    .withDigestAlgorithmForDataObjectReferences("http://www.w3.org/2000/09/xmldsig#sha1")
+                    .withDigestAlgorithmForReferenceProperties("http://www.w3.org/2000/09/xmldsig#sha1")
+                    .withDigestAlgorithmForTimeStampProperties("http://www.w3.org/2000/09/xmldsig#sha1")
+                    .withSignatureAlgorithm("RSA", XMLSignature.ALGO_ID_SIGNATURE_RSA_SHA1);
+            XadesSigner signer = new XadesBesSigningProfile(keyingDataProvider)
+                    .withSignatureAlgorithms(signatureAlgorithms)
+                    .withBasicSignatureOptions(signatureOptions)
+                    .newSigner();
 
-            KeyInfoFactory keyInfoFactory = factory.getKeyInfoFactory();
-            X509Data x509Data = keyInfoFactory.newX509Data(Collections.singletonList(keyMaterial.certificate()));
-            KeyInfo keyInfo = keyInfoFactory.newKeyInfo(Collections.singletonList(x509Data));
-
-            DOMSignContext signContext = new DOMSignContext(keyMaterial.privateKey(), document.getDocumentElement());
-            XMLSignature signature = factory.newXMLSignature(signedInfo, keyInfo);
-            signature.sign(signContext);
+            DataObjectDesc dataObject = new DataObjectReference("#comprobante")
+                    .withTransform(new EnvelopedSignatureTransform())
+                    .withDataObjectFormat(new DataObjectFormatProperty("text/xml")
+                            .withDescription("Comprobante electronico SRI"));
+            signer.sign(new SignedDataObjects(dataObject), document.getDocumentElement(), SignatureAppendingStrategies.AsLastChild);
             return toString(document);
         } catch (CertificateExpiredException exception) {
             throw new BusinessException("Firma vencida");
@@ -115,7 +119,7 @@ public class XadesBesSignatureAdapter implements SignaturePort {
         StringWriter writer = new StringWriter();
         var transformer = TransformerFactory.newInstance().newTransformer();
         transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
-        transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+        transformer.setOutputProperty(OutputKeys.INDENT, "no");
         transformer.transform(new DOMSource(document), new StreamResult(writer));
         return writer.toString();
     }

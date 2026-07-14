@@ -6,15 +6,23 @@ import com.factuec.domain.enums.AmbienteSri;
 import com.factuec.domain.enums.EstadoSri;
 import com.factuec.shared.exception.BusinessException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
+import java.util.regex.Pattern;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.web.util.HtmlUtils;
 import org.springframework.web.client.RestClient;
 
 @Service
 public class SriSoapReceptionAdapter implements SriReceptionPort {
+    private static final Pattern ESTADO_PATTERN = Pattern.compile("<estado>(.*?)</estado>", Pattern.DOTALL);
+    private static final Pattern MESSAGE_PATTERN = Pattern.compile(
+            "<mensaje>\\s*(?:<identificador>(.*?)</identificador>)?\\s*<mensaje>(.*?)</mensaje>\\s*(?:<informacionAdicional>(.*?)</informacionAdicional>)?\\s*(?:<tipo>(.*?)</tipo>)?\\s*</mensaje>",
+            Pattern.DOTALL);
+
     private final FactuEcProperties properties;
     private final RestClient restClient;
 
@@ -40,11 +48,47 @@ public class SriSoapReceptionAdapter implements SriReceptionPort {
                     .body(body)
                     .retrieve()
                     .body(String.class);
-            EstadoSri estado = response != null && response.contains("DEVUELTA") ? EstadoSri.DEVUELTA : EstadoSri.RECIBIDA;
-            return new SriReceptionResult(estado, List.of(new SriResponseMessage(null, "Respuesta recepcion SRI", response, estado.name())));
+            EstadoSri estado = extractEstado(response);
+            return new SriReceptionResult(estado, parseMessages(response, "Respuesta recepcion SRI", estado));
         } catch (Exception exception) {
             throw new BusinessException("Error al enviar comprobante al SRI: " + exception.getMessage());
         }
+    }
+
+    private EstadoSri extractEstado(String response) {
+        if (response == null) {
+            return EstadoSri.ERROR;
+        }
+        var matcher = ESTADO_PATTERN.matcher(response);
+        if (!matcher.find()) {
+            return response.contains("DEVUELTA") ? EstadoSri.DEVUELTA : EstadoSri.RECIBIDA;
+        }
+        return "DEVUELTA".equalsIgnoreCase(clean(matcher.group(1))) ? EstadoSri.DEVUELTA : EstadoSri.RECIBIDA;
+    }
+
+    private List<SriResponseMessage> parseMessages(String response, String fallback, EstadoSri estado) {
+        if (response == null || response.isBlank()) {
+            return List.of(new SriResponseMessage(null, fallback, response, estado.name()));
+        }
+        var messages = new ArrayList<SriResponseMessage>();
+        var matcher = MESSAGE_PATTERN.matcher(response);
+        while (matcher.find()) {
+            messages.add(new SriResponseMessage(
+                    clean(matcher.group(1)),
+                    clean(matcher.group(2)),
+                    clean(matcher.group(3)),
+                    clean(matcher.group(4))));
+        }
+        return messages.isEmpty()
+                ? List.of(new SriResponseMessage(null, fallback, response, estado.name()))
+                : messages;
+    }
+
+    private String clean(String value) {
+        if (value == null) {
+            return null;
+        }
+        return HtmlUtils.htmlUnescape(value.strip());
     }
 
     private String receptionEnvelope(String xmlFirmado) {

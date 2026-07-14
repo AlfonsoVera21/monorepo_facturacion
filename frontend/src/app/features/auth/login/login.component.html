@@ -41,9 +41,21 @@
         </div>
         <div class="login-field">
           <span class="material-symbols-outlined">lock</span>
-          <input id="password" type="password" formControlName="password" placeholder="********" autocomplete="current-password" />
-          <button class="icon-button" type="button" aria-label="Mostrar contrasena">
-            <span class="material-symbols-outlined">visibility</span>
+          <input
+            id="password"
+            [type]="showPassword() ? 'text' : 'password'"
+            formControlName="password"
+            placeholder="********"
+            autocomplete="current-password"
+          />
+          <button
+            class="icon-button"
+            type="button"
+            (click)="togglePasswordVisibility()"
+            [attr.aria-label]="showPassword() ? 'Ocultar contrasena' : 'Mostrar contrasena'"
+            [attr.aria-pressed]="showPassword()"
+          >
+            <span class="material-symbols-outlined">{{ showPassword() ? 'visibility_off' : 'visibility' }}</span>
           </button>
         </div>
       </div>
@@ -52,6 +64,10 @@
         <input type="checkbox" formControlName="remember" />
         <span>Mantener sesion iniciada</span>
       </label>
+
+      @if (errorMessage()) {
+        <p class="login-card__error">{{ errorMessage() }}</p>
+      }
 
       <button class="btn btn--primary login-card__submit" type="submit" [disabled]="loading()">
         <span>{{ loading() ? 'Ingresando...' : 'Ingresar' }}</span>

@@ -116,6 +116,7 @@
 
 .login-field input {
   padding-left: 40px;
+  padding-right: 46px;
 }
 
 .login-field .icon-button {
@@ -138,6 +139,17 @@
   width: 18px;
   height: 18px;
   accent-color: var(--color-action);
+}
+
+.login-card__error {
+  margin: 14px 40px 0;
+  border: 1px solid rgba(239, 68, 68, 0.22);
+  border-radius: 8px;
+  background: rgba(239, 68, 68, 0.08);
+  color: #dc2626;
+  padding: 10px 12px;
+  font-size: 13px;
+  font-weight: 700;
 }
 
 .login-card__submit {
@@ -251,6 +263,7 @@
 
   .login-card__panel > .field,
   .login-card__remember,
+  .login-card__error,
   .login-card__submit {
     margin-inline: 24px;
   }

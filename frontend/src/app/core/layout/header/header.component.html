@@ -14,19 +14,72 @@
       <span></span>
       <strong>SRI ONLINE</strong>
     </div>
-    <span class="environment-badge environment-badge--production">PRODUCCION</span>
+    <span
+      class="environment-badge"
+      [class.environment-badge--production]="ambiente() === 'PRODUCCION'"
+      [class.environment-badge--test]="ambiente() !== 'PRODUCCION'"
+    >
+      {{ ambiente() }}
+    </span>
     <button class="icon-button" type="button" aria-label="Notificaciones">
       <span class="material-symbols-outlined">notifications</span>
       <i></i>
     </button>
-    <div class="topbar__user">
-      <div>
-        <strong>{{ user()?.name || 'Admin User' }}</strong>
-        <span>{{ user()?.role?.name || 'Administrador' }}</span>
-      </div>
-      <button class="avatar-button" type="button" (click)="logout()" aria-label="Cerrar sesion">
-        {{ (user()?.name || 'AU').slice(0, 2).toUpperCase() }}
+    <div class="topbar__user" [class.is-open]="profileMenuOpen()">
+      <button
+        class="profile-trigger"
+        type="button"
+        (click)="toggleProfileMenu()"
+        [attr.aria-expanded]="profileMenuOpen()"
+        aria-haspopup="menu"
+        aria-label="Abrir opciones de usuario"
+      >
+        <div>
+          <strong>{{ user()?.name || 'Admin User' }}</strong>
+          <span>{{ user()?.role?.name || 'Administrador' }}</span>
+        </div>
+        <span class="avatar-button" aria-hidden="true">
+          {{ (user()?.name || 'AU').slice(0, 2).toUpperCase() }}
+        </span>
+        <span class="material-symbols-outlined profile-trigger__chevron">expand_more</span>
       </button>
+
+      @if (profileMenuOpen()) {
+        <button class="profile-menu-backdrop" type="button" aria-label="Cerrar menu de usuario" (click)="closeProfileMenu()"></button>
+        <section class="profile-menu" role="menu" aria-label="Opciones de usuario">
+          <div class="profile-menu__identity">
+            <span class="avatar-button avatar-button--large" aria-hidden="true">
+              {{ (user()?.name || 'AU').slice(0, 2).toUpperCase() }}
+            </span>
+            <div>
+              <strong>{{ user()?.name || 'Admin User' }}</strong>
+              <span>{{ user()?.email || 'admin@factuec.local' }}</span>
+            </div>
+          </div>
+          <button type="button" role="menuitem" (click)="navigateTo('/usuarios')">
+            <span class="material-symbols-outlined">account_circle</span>
+            Mi perfil
+          </button>
+          <button type="button" role="menuitem" (click)="navigateTo('/configuracion')">
+            <span class="material-symbols-outlined">settings</span>
+            Configuracion
+          </button>
+          <button class="profile-menu__danger" type="button" role="menuitem" (click)="requestLogout()">
+            <span class="material-symbols-outlined">logout</span>
+            Cerrar sesion
+          </button>
+        </section>
+      }
     </div>
   </div>
 </header>
+
+<app-confirm-dialog
+  [open]="logoutDialogOpen()"
+  title="Cerrar sesion"
+  message="Vas a salir de FactuEC y tendras que iniciar sesion nuevamente."
+  confirmLabel="Cerrar sesion"
+  cancelLabel="Cancelar"
+  (confirmed)="confirmLogout()"
+  (cancelled)="cancelLogout()"
+/>

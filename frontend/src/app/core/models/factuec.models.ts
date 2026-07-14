@@ -17,26 +17,28 @@ export type TipoIdentificacion = 'RUC' | 'CEDULA' | 'PASAPORTE' | 'CONSUMIDOR_FI
 
 export type TipoProducto = 'PRODUCTO' | 'SERVICIO';
 
+export type EntityId = string | number;
+
 export interface Role {
-  id: number;
+  id: EntityId;
   name: string;
   description: string;
   permissions: string[];
 }
 
 export interface User {
-  id: number;
+  id: EntityId;
   name: string;
   email: string;
   username: string;
   avatarUrl?: string;
-  empresaId: number;
+  empresaId?: EntityId;
   role: Role;
   status: 'ACTIVO' | 'INACTIVO' | 'BLOQUEADO';
 }
 
 export interface Empresa {
-  id: number;
+  id: EntityId;
   ruc: string;
   razonSocial: string;
   nombreComercial: string;
@@ -47,7 +49,7 @@ export interface Empresa {
 }
 
 export interface Establecimiento {
-  id: number;
+  id: EntityId;
   codigo: string;
   nombre: string;
   direccion: string;
@@ -56,7 +58,7 @@ export interface Establecimiento {
 }
 
 export interface PuntoEmision {
-  id: number;
+  id: EntityId;
   codigo: string;
   nombre: string;
   secuencialFactura: number;
@@ -64,7 +66,7 @@ export interface PuntoEmision {
 }
 
 export interface Cliente {
-  id: number;
+  id: EntityId;
   tipoIdentificacion: TipoIdentificacion;
   identificacion: string;
   razonSocial: string;
@@ -76,7 +78,7 @@ export interface Cliente {
 }
 
 export interface Producto {
-  id: number;
+  id: EntityId;
   codigo: string;
   nombre: string;
   categoria: string;
@@ -88,7 +90,7 @@ export interface Producto {
 }
 
 export interface ComprobanteDetalle {
-  id: number;
+  id: EntityId;
   codigo: string;
   descripcion: string;
   cantidad: number;
@@ -99,7 +101,7 @@ export interface ComprobanteDetalle {
 }
 
 export interface ComprobantePago {
-  id: number;
+  id: EntityId;
   formaPago: string;
   valor: number;
   plazo: number;
@@ -107,7 +109,7 @@ export interface ComprobantePago {
 }
 
 export interface SriMensaje {
-  id: number;
+  id: EntityId;
   fecha: string;
   comprobanteNumero: string;
   codigo: string;
@@ -117,7 +119,7 @@ export interface SriMensaje {
 }
 
 export interface Comprobante {
-  id: number;
+  id: EntityId;
   tipo: TipoComprobante;
   numero: string;
   fechaEmision: string;
@@ -137,8 +139,8 @@ export interface Comprobante {
 }
 
 export interface FirmaElectronica {
-  id: number;
-  empresaId: number;
+  id: EntityId;
+  empresaId: EntityId;
   archivoNombre: string;
   titular: string;
   emisor: string;
@@ -148,7 +150,7 @@ export interface FirmaElectronica {
 }
 
 export interface AuditLog {
-  id: number;
+  id: EntityId;
   fecha: string;
   usuario: string;
   accion: string;

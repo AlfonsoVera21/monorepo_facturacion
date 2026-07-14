@@ -4,7 +4,7 @@ import com.factuec.application.dto.comprobante.ComprobanteResponse;
 import com.factuec.application.dto.comprobante.FacturaDetalleRequest;
 import com.factuec.application.dto.comprobante.FacturaDetalleResponse;
 import com.factuec.application.dto.comprobante.FacturaRequest;
-import com.factuec.application.port.out.EmailPort;
+import com.factuec.application.dto.comprobante.SriMensajeResponse;
 import com.factuec.application.port.out.RideGeneratorPort;
 import com.factuec.application.port.out.SignaturePort;
 import com.factuec.application.port.out.SriAuthorizationPort;
@@ -81,7 +81,7 @@ public class ComprobanteUseCase {
     private final SriReceptionPort sriReceptionPort;
     private final SriAuthorizationPort sriAuthorizationPort;
     private final RideGeneratorPort rideGeneratorPort;
-    private final EmailPort emailPort;
+    private final ComprobanteEmailUseCase comprobanteEmailUseCase;
     private final FactuEcProperties properties;
     private final AuditService auditService;
 
@@ -102,7 +102,7 @@ public class ComprobanteUseCase {
                               SriReceptionPort sriReceptionPort,
                               SriAuthorizationPort sriAuthorizationPort,
                               RideGeneratorPort rideGeneratorPort,
-                              EmailPort emailPort,
+                              ComprobanteEmailUseCase comprobanteEmailUseCase,
                               FactuEcProperties properties,
                               AuditService auditService) {
         this.empresaUseCase = empresaUseCase;
@@ -122,7 +122,7 @@ public class ComprobanteUseCase {
         this.sriReceptionPort = sriReceptionPort;
         this.sriAuthorizationPort = sriAuthorizationPort;
         this.rideGeneratorPort = rideGeneratorPort;
-        this.emailPort = emailPort;
+        this.comprobanteEmailUseCase = comprobanteEmailUseCase;
         this.properties = properties;
         this.auditService = auditService;
     }
@@ -167,11 +167,19 @@ public class ComprobanteUseCase {
         saveMessages(comprobante, reception.mensajes(), reception.estado());
         auditService.log(AuditAction.ENVIO_SRI, "Comprobante", comprobante.getId(), "Factura enviada al SRI", reception.estado().name());
 
+        if (reception.estado() != EstadoSri.RECIBIDA) {
+            comprobante.setEstadoInterno(reception.estado() == EstadoSri.DEVUELTA
+                    ? EstadoComprobante.DEVUELTO
+                    : EstadoComprobante.ERROR);
+            return toResponse(comprobanteRepository.save(comprobante));
+        }
+
         SriAuthorizationResult authorization = sriAuthorizationPort.consultarAutorizacion(comprobante.getAmbiente(), comprobante.getClaveAcceso());
         applyAuthorization(comprobante, authorization);
         saveMessages(comprobante, authorization.mensajes(), authorization.estado());
         ComprobanteEntity saved = comprobanteRepository.save(comprobante);
         auditService.log(AuditAction.AUTORIZACION, "Comprobante", saved.getId(), "Autorizacion consultada", authorization.estado().name());
+        comprobanteEmailUseCase.registrarYEnviarAutorizado(saved);
         return toResponse(saved);
     }
 
@@ -196,7 +204,9 @@ public class ComprobanteUseCase {
         applyAuthorization(comprobante, authorization);
         saveMessages(comprobante, authorization.mensajes(), authorization.estado());
         auditService.log(AuditAction.AUTORIZACION, "Comprobante", id, "Autorizacion consultada", authorization.estado().name());
-        return toResponse(comprobanteRepository.save(comprobante));
+        ComprobanteEntity saved = comprobanteRepository.save(comprobante);
+        comprobanteEmailUseCase.registrarYEnviarAutorizado(saved);
+        return toResponse(saved);
     }
 
     @Transactional
@@ -229,9 +239,12 @@ public class ComprobanteUseCase {
     @Transactional
     public void enviarCorreo(UUID id) {
         ComprobanteEntity comprobante = findEntity(id);
-        byte[] ride = rideGeneratorPort.generateRide(comprobante);
-        emailPort.sendComprobante(comprobante, ride);
-        auditService.log(AuditAction.ENVIO_CORREO, "Comprobante", id, "Comprobante enviado por correo", comprobante.getCliente().getCorreo());
+        comprobanteEmailUseCase.enviarAhora(comprobante);
+    }
+
+    @Transactional
+    public int procesarCorreosPendientes() {
+        return comprobanteEmailUseCase.procesarPendientes();
     }
 
     private ComprobanteEntity buildFactura(FacturaRequest request, EstadoComprobante estado) {
@@ -477,7 +490,18 @@ public class ComprobanteUseCase {
                 entity.getNumeroAutorizacion(),
                 entity.getFechaAutorizacion(),
                 entity.getMensajesSri(),
+                entity.getId() == null
+                        ? List.of()
+                        : sriMensajeRepository.findByComprobanteId(entity.getId()).stream().map(this::toSriMensajeResponse).toList(),
                 entity.getDetalles().stream().map(this::toDetalleResponse).toList());
+    }
+
+    private SriMensajeResponse toSriMensajeResponse(SriMensajeEntity mensaje) {
+        return new SriMensajeResponse(
+                mensaje.getIdentificador(),
+                mensaje.getMensaje(),
+                mensaje.getInformacionAdicional(),
+                mensaje.getTipo());
     }
 
     private FacturaDetalleResponse toDetalleResponse(ComprobanteDetalleEntity detalle) {

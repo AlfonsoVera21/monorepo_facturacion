@@ -16,6 +16,7 @@
 .app-layout__content {
   width: min(100%, var(--container-max-width));
   margin: 0 auto;
+  overflow-x: clip;
   padding: 32px;
 }
 

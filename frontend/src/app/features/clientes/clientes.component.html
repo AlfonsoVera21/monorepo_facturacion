@@ -2,16 +2,17 @@
   title="Gestion de Clientes"
   subtitle="Administra la base de datos de socios comerciales y clientes recurrentes."
   icon="group"
-  actionLabel="Nuevo Cliente"
-  actionIcon="person_add"
-  actionLink="/clientes"
 />
 
+@if (feedback(); as message) {
+  <p class="feedback" [class]="'feedback feedback--' + message.tone">{{ message.message }}</p>
+}
+
 <section class="stats-grid">
-  <app-metric-card title="Total Clientes" value="1,284" icon="group" tone="primary" />
-  <app-metric-card title="Activos" value="1,150" icon="verified" tone="success" />
-  <app-metric-card title="Ventas Mes" value="$42,390" icon="receipt_long" tone="primary" />
-  <app-metric-card title="Inactivos" value="134" icon="warning" tone="warning" />
+  <app-metric-card title="Total Clientes" [value]="totalClientes()" icon="group" tone="primary" />
+  <app-metric-card title="Activos" [value]="activos()" icon="verified" tone="success" />
+  <app-metric-card title="Listos Factura" [value]="activos()" icon="receipt_long" tone="primary" />
+  <app-metric-card title="Inactivos" [value]="inactivos()" icon="warning" tone="warning" />
 </section>
 
 <section class="card client-toolbar">
@@ -24,11 +25,68 @@
   <button class="chip" type="button">Cedula</button>
   <button class="chip" type="button">Pasaporte</button>
   <span class="toolbar-spacer"></span>
-  <button class="btn btn--secondary" type="button">
-    <span class="material-symbols-outlined">file_download</span>
-    Exportar
+  <button class="btn btn--primary" type="button" (click)="newCliente()">
+    <span class="material-symbols-outlined">person_add</span>
+    Nuevo Cliente
   </button>
 </section>
+
+@if (showForm()) {
+  <section class="card client-form" [formGroup]="clienteForm">
+    <div class="section-title">
+      <div>
+        <h2>{{ editingId() ? 'Editar Cliente' : 'Nuevo Cliente' }}</h2>
+        <p>Cliente requerido para emitir facturas reales en pruebas.</p>
+      </div>
+    </div>
+    <div class="form-grid">
+      <div class="field">
+        <label for="tipoIdentificacion">Tipo</label>
+        <select id="tipoIdentificacion" formControlName="tipoIdentificacion">
+          <option value="RUC">RUC</option>
+          <option value="CEDULA">Cedula</option>
+          <option value="PASAPORTE">Pasaporte</option>
+          <option value="CONSUMIDOR_FINAL">Consumidor Final</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="identificacion">Identificacion</label>
+        <input id="identificacion" formControlName="identificacion" />
+      </div>
+      <div class="field field--span-2">
+        <label for="razonSocial">Razon Social</label>
+        <input id="razonSocial" formControlName="razonSocial" />
+      </div>
+      <div class="field">
+        <label for="correo">Correo</label>
+        <input id="correo" type="email" formControlName="correo" />
+      </div>
+      <div class="field">
+        <label for="telefono">Telefono</label>
+        <input id="telefono" formControlName="telefono" />
+      </div>
+      <div class="field field--span-2">
+        <label for="direccion">Direccion</label>
+        <input id="direccion" formControlName="direccion" />
+      </div>
+      <div class="field">
+        <label for="ciudad">Ciudad</label>
+        <input id="ciudad" formControlName="ciudad" />
+      </div>
+      <div class="field">
+        <label for="provincia">Provincia</label>
+        <input id="provincia" formControlName="provincia" />
+      </div>
+    </div>
+    <footer class="form-actions">
+      <button class="btn btn--secondary" type="button" (click)="cancelForm()">Cancelar</button>
+      <button class="btn btn--primary" type="button" (click)="saveCliente()" [disabled]="saving()">
+        <span class="material-symbols-outlined">save</span>
+        {{ saving() ? 'Guardando...' : 'Guardar Cliente' }}
+      </button>
+    </footer>
+  </section>
+}
 
 <section class="table-shell">
   <div class="table-scroll">
@@ -53,10 +111,19 @@
             <td><app-status-badge [status]="cliente.estado" /></td>
             <td>
               <span class="actions">
-                <button class="icon-button" type="button" aria-label="Editar"><span class="material-symbols-outlined">edit</span></button>
-                <button class="icon-button" type="button" aria-label="Historial"><span class="material-symbols-outlined">history</span></button>
-                <button class="icon-button" type="button" aria-label="Eliminar"><span class="material-symbols-outlined">delete</span></button>
+                <button class="icon-button" type="button" aria-label="Editar" (click)="editCliente(cliente)">
+                  <span class="material-symbols-outlined">edit</span>
+                </button>
+                <button class="icon-button" type="button" aria-label="Inactivar" (click)="deleteCliente(cliente)">
+                  <span class="material-symbols-outlined">delete</span>
+                </button>
               </span>
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="6">
+              <p class="empty-state">No hay clientes. Crea uno para poder emitir facturas.</p>
             </td>
           </tr>
         }

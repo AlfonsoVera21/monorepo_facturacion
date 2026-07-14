@@ -11,7 +11,8 @@ public record FactuEcProperties(
         Signature signature,
         Soap soap,
         Mail mail,
-        Bootstrap bootstrap
+        Bootstrap bootstrap,
+        Cors cors
 ) {
     public record Jwt(String secret, Duration accessTokenTtl, Duration refreshTokenTtl) {
     }
@@ -33,5 +34,8 @@ public record FactuEcProperties(
     }
 
     public record Bootstrap(boolean adminEnabled, String adminUsername, String adminEmail, String adminPassword) {
+    }
+
+    public record Cors(String allowedOrigins) {
     }
 }

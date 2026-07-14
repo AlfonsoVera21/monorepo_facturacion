@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 
 import { Comprobante } from '../../../core/models/factuec.models';
@@ -18,16 +18,69 @@ export class ComprobanteDetailComponent implements OnInit {
   private readonly comprobantesService = inject(ComprobantesService);
 
   protected readonly comprobante = signal<Comprobante | undefined>(undefined);
-  protected readonly timeline: TimelineItem[] = [
-    { title: 'Comprobante Creado', timestamp: '08 Jul, 14:30:05', icon: 'check' },
-    { title: 'Firmado Electronicamente', timestamp: '08 Jul, 14:30:08', icon: 'check' },
-    { title: 'Enviado al SRI', timestamp: '08 Jul, 14:30:15', icon: 'check' },
-    { title: 'Recibido por SRI', timestamp: '08 Jul, 14:30:22', icon: 'check' },
-    { title: 'Autorizado', timestamp: '08 Jul, 14:35:12', icon: 'done_all', status: 'EXITO' }
-  ];
+  protected readonly timeline = computed<TimelineItem[]>(() => {
+    const item = this.comprobante();
+    if (!item) {
+      return [];
+    }
+
+    const events: TimelineItem[] = [
+      { title: `Comprobante ${item.numero}`, timestamp: item.fechaEmision, icon: 'receipt_long', status: item.estado }
+    ];
+
+    item.mensajesSri.forEach((message, index) => {
+      events.push({
+        title: message.mensaje,
+        timestamp: message.informacionAdicional || message.fecha,
+        icon: this.iconForStatus(message.estado),
+        status: message.codigo || `SRI ${index + 1}`
+      });
+    });
+
+    return events;
+  });
 
   ngOnInit(): void {
-    const id = Number(this.route.snapshot.paramMap.get('id'));
-    this.comprobantesService.getById(id).subscribe((item) => this.comprobante.set(item));
+    const id = this.route.snapshot.paramMap.get('id');
+    if (id) {
+      this.comprobantesService.getById(id).subscribe((item) => this.comprobante.set(item));
+    }
+  }
+
+  protected openRide(item: Comprobante): void {
+    this.comprobantesService.downloadRide(item.id).subscribe((pdf) => this.openBlob(pdf, `${item.numero}.pdf`));
+  }
+
+  protected downloadXml(item: Comprobante): void {
+    this.comprobantesService.downloadXml(item.id).subscribe((xml) => this.downloadBlob(xml, `${item.numero}.xml`));
+  }
+
+  private iconForStatus(status: Comprobante['estado']): string {
+    if (status === 'AUTORIZADO') {
+      return 'done_all';
+    }
+    if (status === 'RECHAZADO' || status === 'DEVUELTO' || status === 'ERROR') {
+      return 'error';
+    }
+    return 'sync';
+  }
+
+  private openBlob(blob: Blob, fileName: string): void {
+    const file = new Blob([blob], { type: 'application/pdf' });
+    const url = URL.createObjectURL(file);
+    const opened = window.open(url, '_blank', 'noopener');
+    if (!opened) {
+      this.downloadBlob(file, fileName);
+    }
+    setTimeout(() => URL.revokeObjectURL(url), 60_000);
+  }
+
+  private downloadBlob(blob: Blob, fileName: string): void {
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = fileName;
+    anchor.click();
+    URL.revokeObjectURL(url);
   }
 }

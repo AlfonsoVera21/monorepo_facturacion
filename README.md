@@ -18,6 +18,10 @@ Backend Spring Boot 3 / Java 21 para facturacion electronica Ecuador, organizado
 ```bash
 export JWT_SECRET="change-this-local-secret-with-at-least-32-bytes"
 export ADMIN_PASSWORD="change-this-admin-password"
+export CORS_ALLOWED_ORIGINS="http://localhost:4200,http://127.0.0.1:4200"
+export SRI_AMBIENTE_DEFAULT=PRUEBAS
+export SRI_MOCK_ENABLED=false
+export SIGNATURE_MOCK_ENABLED=false
 docker compose up --build
 ```
 
@@ -40,8 +44,12 @@ password: valor de ADMIN_PASSWORD
 docker compose up -d postgres
 export JWT_SECRET="change-this-local-secret-with-at-least-32-bytes"
 export ADMIN_PASSWORD="change-this-admin-password"
-export SRI_MOCK_ENABLED=true
-export SIGNATURE_MOCK_ENABLED=true
+export CORS_ALLOWED_ORIGINS="http://localhost:4200,http://127.0.0.1:4200"
+export SRI_AMBIENTE_DEFAULT=PRUEBAS
+export SRI_MOCK_ENABLED=false
+export SIGNATURE_MOCK_ENABLED=false
+export FACTUEC_CERTIFICATES_PATH="./storage/certificates"
+export FIRMA_ELECTRONICA_PASSWORD="password-real-de-tu-firma"
 mvn spring-boot:run
 ```
 
@@ -49,6 +57,8 @@ mvn spring-boot:run
 
 - `DB_URL`, `DB_USERNAME`, `DB_PASSWORD`
 - `JWT_SECRET`, `JWT_ACCESS_TTL`, `JWT_REFRESH_TTL`
+- `ADMIN_PASSWORD`, `ADMIN_USERNAME`, `ADMIN_EMAIL`
+- `CORS_ALLOWED_ORIGINS`
 - `SRI_RECEPCION_PRUEBAS_URL`, `SRI_AUTORIZACION_PRUEBAS_URL`
 - `SRI_RECEPCION_PRODUCCION_URL`, `SRI_AUTORIZACION_PRODUCCION_URL`
 - `SRI_MOCK_ENABLED`
@@ -71,24 +81,80 @@ mvn spring-boot:run
 
 ## Firma electronica
 
-`XadesBesSignatureAdapter` valida XML, certificado PKCS#12 (`.p12/.pfx`), password y vencimiento. La password no se guarda en texto plano: `firmas_electronicas.password_secret_ref` debe apuntar al nombre de una variable de entorno que contiene la clave real.
+`XadesBesSignatureAdapter` genera firma XAdES-BES sobre el XML del comprobante y valida certificado PKCS#12 (`.p12/.pfx`), password y vencimiento. La password no se guarda en texto plano: `firmas_electronicas.password_secret_ref` debe apuntar al nombre de una variable de entorno que contiene la clave real.
 
-La implementacion actual genera XMLDSig enveloped con certificado del contribuyente y deja el adaptador preparado para completar XAdES-BES estricto. Para produccion se recomienda agregar/configurar `xades4j` y mapear `SignedProperties` dentro de `infrastructure/signature/XadesBesSignatureAdapter`.
+Para Docker, coloca tu firma en:
 
-En desarrollo puede usarse:
+```text
+/Users/alfonsoverarojas/Documents/api_facturacion/storage/certificates/tu_firma.p12
+```
+
+Dentro del contenedor esa misma firma se registra con esta ruta:
+
+```text
+/app/storage/certificates/tu_firma.p12
+```
+
+En `.env`, configura la clave real de la firma:
+
+```dotenv
+FIRMA_ELECTRONICA_PASSWORD="password-real-de-tu-firma"
+```
+
+Registra la firma activa para la empresa usando `passwordSecretRef`, no la password directa:
 
 ```bash
-export SIGNATURE_MOCK_ENABLED=true
+TOKEN=$(curl -s -X POST http://localhost:8080/api/auth/login \
+  -H 'Content-Type: application/json' \
+  --data '{"username":"admin","password":"change-this-admin-password"}' \
+  | jq -r '.data.accessToken')
+
+EMPRESA_ID="uuid-de-tu-empresa"
+
+curl -X POST http://localhost:8080/api/firmas \
+  -H "Authorization: Bearer $TOKEN" \
+  -H 'Content-Type: application/json' \
+  --data '{
+    "empresaId": "'"$EMPRESA_ID"'",
+    "nombreArchivo": "tu_firma.p12",
+    "rutaSegura": "/app/storage/certificates/tu_firma.p12",
+    "passwordSecretRef": "FIRMA_ELECTRONICA_PASSWORD",
+    "fechaEmision": "2026-01-01",
+    "fechaVencimiento": "2027-01-01",
+    "estado": "ACTIVA"
+  }'
 ```
 
 ## SRI
 
-Los adaptadores `SriSoapReceptionAdapter` y `SriSoapAuthorizationAdapter` usan URLs configurables por ambiente. En `local`, `SRI_MOCK_ENABLED=true` permite probar el flujo completo sin llamar servicios externos.
+Los adaptadores `SriSoapReceptionAdapter` y `SriSoapAuthorizationAdapter` usan URLs configurables por ambiente. Para probar contra el ambiente de pruebas del SRI:
 
-Para produccion:
+```bash
+export SRI_AMBIENTE_DEFAULT=PRUEBAS
+export SRI_MOCK_ENABLED=false
+export SIGNATURE_MOCK_ENABLED=false
+```
+
+La empresa emisora debe estar creada o actualizada con:
+
+```json
+{
+  "ambiente": "PRUEBAS"
+}
+```
+
+Para volver a pruebas sin llamar al SRI externo:
+
+```bash
+export SRI_MOCK_ENABLED=true
+export SIGNATURE_MOCK_ENABLED=true
+```
+
+Para produccion, cambia explicitamente:
 
 ```bash
 export SPRING_PROFILES_ACTIVE=prod
+export SRI_AMBIENTE_DEFAULT=PRODUCCION
 export SRI_MOCK_ENABLED=false
 export SIGNATURE_MOCK_ENABLED=false
 ```

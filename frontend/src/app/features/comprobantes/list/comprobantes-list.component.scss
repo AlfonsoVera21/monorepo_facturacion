@@ -35,6 +35,19 @@
   color: #fff;
 }
 
+.list-footer .icon-button:disabled,
+.pager:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.empty-state {
+  margin: 0;
+  padding: 18px;
+  color: var(--color-muted);
+  text-align: center;
+}
+
 .comprobantes-summary {
   margin-top: 18px;
 }

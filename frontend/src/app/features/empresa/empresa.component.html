@@ -11,7 +11,11 @@
   <button class="tab" type="button"><span class="material-symbols-outlined">settings_suggest</span>Configuracion SRI</button>
 </section>
 
-<form class="company-grid" [formGroup]="empresaForm">
+@if (feedback(); as message) {
+  <p class="feedback" [class]="'feedback feedback--' + message.tone">{{ message.message }}</p>
+}
+
+<section class="company-grid" [formGroup]="empresaForm">
   <section class="card stack">
     <div class="section-title">
       <div>
@@ -44,6 +48,13 @@
         <textarea id="direccionMatriz" formControlName="direccionMatriz"></textarea>
       </div>
     </div>
+    <footer class="card-actions">
+      <button class="btn btn--secondary" type="button" (click)="discardChanges()">Descartar</button>
+      <button class="btn btn--primary" type="button" (click)="saveEmpresa()" [disabled]="savingEmpresa()">
+        <span class="material-symbols-outlined">save</span>
+        {{ savingEmpresa() ? 'Guardando...' : empresaId() ? 'Actualizar Empresa' : 'Crear Empresa' }}
+      </button>
+    </footer>
   </section>
 
   <aside class="card logo-card">
@@ -59,8 +70,40 @@
         <h2>Locales y Puntos de Emision</h2>
         <p>Gestiona establecimientos autorizados por SRI.</p>
       </div>
-      <button class="btn btn--primary" type="button"><span class="material-symbols-outlined">add</span>Nuevo Establecimiento</button>
+      <button class="btn btn--primary" type="button" (click)="newEstablecimiento()">
+        <span class="material-symbols-outlined">add</span>
+        Nuevo Establecimiento
+      </button>
     </div>
+
+    @if (showEstablecimientoForm()) {
+      <form class="inline-form" [formGroup]="establecimientoForm">
+        <div class="field">
+          <label for="establecimientoCodigo">Codigo</label>
+          <input id="establecimientoCodigo" formControlName="codigo" maxlength="3" />
+        </div>
+        <div class="field">
+          <label for="establecimientoNombre">Nombre</label>
+          <input id="establecimientoNombre" formControlName="nombre" />
+        </div>
+        <div class="field field--wide">
+          <label for="establecimientoDireccion">Direccion</label>
+          <input id="establecimientoDireccion" formControlName="direccion" />
+        </div>
+        <label class="check-inline">
+          <input type="checkbox" formControlName="activo" />
+          Activo
+        </label>
+        <div class="inline-actions">
+          <button class="btn btn--secondary" type="button" (click)="cancelEstablecimiento()">Cancelar</button>
+          <button class="btn btn--primary" type="button" (click)="saveEstablecimiento()" [disabled]="savingEstablecimiento()">
+            <span class="material-symbols-outlined">save</span>
+            {{ savingEstablecimiento() ? 'Guardando...' : 'Guardar Local' }}
+          </button>
+        </div>
+      </form>
+    }
+
     <div class="table-scroll">
       <table class="data-table">
         <thead>
@@ -82,15 +125,59 @@
               </td>
               <td>
                 @for (punto of establecimiento.puntosEmision; track punto.id) {
-                  <span class="point-chip">{{ punto.nombre }}</span>
+                  <span class="point-chip">{{ punto.codigo }} - {{ punto.nombre }}</span>
+                }
+                @if (!establecimiento.puntosEmision.length) {
+                  <small>Sin puntos registrados</small>
                 }
               </td>
               <td><app-status-badge [status]="establecimiento.activo ? 'ACTIVO' : 'INACTIVO'" /></td>
               <td>
                 <span class="actions">
-                  <button class="icon-button" type="button" aria-label="Editar"><span class="material-symbols-outlined">edit</span></button>
-                  <button class="icon-button" type="button" aria-label="Eliminar"><span class="material-symbols-outlined">delete</span></button>
+                  <button class="icon-button" type="button" aria-label="Agregar punto de emision" (click)="preparePunto(establecimiento)">
+                    <span class="material-symbols-outlined">add_circle</span>
+                  </button>
+                  <button class="icon-button" type="button" aria-label="Editar" (click)="editEstablecimiento(establecimiento)">
+                    <span class="material-symbols-outlined">edit</span>
+                  </button>
                 </span>
+              </td>
+            </tr>
+            @if (selectedEstablecimientoId() === establecimiento.id) {
+              <tr class="point-form-row">
+                <td colspan="5">
+                  <form class="inline-form inline-form--point" [formGroup]="puntoForm">
+                    <div class="field">
+                      <label for="puntoCodigo">Codigo Punto</label>
+                      <input id="puntoCodigo" formControlName="codigo" maxlength="3" />
+                    </div>
+                    <div class="field">
+                      <label for="puntoNombre">Nombre Punto</label>
+                      <input id="puntoNombre" formControlName="nombre" />
+                    </div>
+                    <div class="field">
+                      <label for="ultimoSecuencial">Ultimo Secuencial</label>
+                      <input id="ultimoSecuencial" type="number" min="0" formControlName="ultimoSecuencial" />
+                    </div>
+                    <label class="check-inline">
+                      <input type="checkbox" formControlName="activo" />
+                      Activo
+                    </label>
+                    <div class="inline-actions">
+                      <button class="btn btn--secondary" type="button" (click)="selectedEstablecimientoId.set(null)">Cerrar</button>
+                      <button class="btn btn--primary" type="button" (click)="savePunto()" [disabled]="savingPunto()">
+                        <span class="material-symbols-outlined">add</span>
+                        {{ savingPunto() ? 'Creando...' : 'Crear Punto' }}
+                      </button>
+                    </div>
+                  </form>
+                </td>
+              </tr>
+            }
+          } @empty {
+            <tr>
+              <td colspan="5">
+                <p class="empty-state">Guarda la empresa y agrega sus 2 establecimientos autorizados por el SRI.</p>
               </td>
             </tr>
           }
@@ -129,8 +216,10 @@
       description="El modo de indisponibilidad solo debe utilizarse cuando los servicios web del SRI no se encuentren operativos."
     />
     <footer>
-      <button class="btn btn--secondary" type="button">Descartar Cambios</button>
-      <button class="btn btn--primary" type="button">Guardar Configuracion</button>
+      <button class="btn btn--secondary" type="button" (click)="discardChanges()">Descartar Cambios</button>
+      <button class="btn btn--primary" type="button" (click)="saveEmpresa()" [disabled]="savingEmpresa()">
+        Guardar Configuracion
+      </button>
     </footer>
   </section>
-</form>
+</section>

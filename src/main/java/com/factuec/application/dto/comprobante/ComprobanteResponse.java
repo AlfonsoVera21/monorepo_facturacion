@@ -35,6 +35,7 @@ public record ComprobanteResponse(
         String numeroAutorizacion,
         Instant fechaAutorizacion,
         String mensajesSri,
+        List<SriMensajeResponse> mensajes,
         List<FacturaDetalleResponse> detalles
 ) {
 }
