@@ -50,6 +50,7 @@ export class ComprobantesListComponent implements OnInit {
   protected readonly tipoOptions = [
     { label: 'Todos los tipos', value: 'TODOS' },
     { label: 'Factura', value: 'FACTURA' },
+    { label: 'Guia de Remision', value: 'GUIA_REMISION' },
     { label: 'Nota de Credito', value: 'NOTA_CREDITO' },
     { label: 'Retencion', value: 'RETENCION' }
   ];
@@ -121,7 +122,15 @@ export class ComprobantesListComponent implements OnInit {
   }
 
   protected typeLabel(tipo: Comprobante['tipo']): string {
-    return tipo.replace('_', ' ');
+    const labels: Record<Comprobante['tipo'], string> = {
+      FACTURA: 'Factura',
+      NOTA_CREDITO: 'Nota de Credito',
+      NOTA_DEBITO: 'Nota de Debito',
+      GUIA_REMISION: 'Guia de Remision',
+      RETENCION: 'Retencion',
+      LIQUIDACION_COMPRA: 'Liquidacion de Compra'
+    };
+    return labels[tipo];
   }
 
   protected openRide(comprobante: Comprobante): void {

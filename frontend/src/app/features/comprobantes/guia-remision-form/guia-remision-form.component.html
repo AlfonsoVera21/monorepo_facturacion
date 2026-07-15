@@ -1,0 +1,289 @@
+<app-breadcrumb [items]="[{ label: 'Comprobantes', link: '/comprobantes' }, { label: 'Nueva Guia de Remision' }]" />
+
+<app-page-header
+  title="Emision de Guia de Remision"
+  subtitle="Firma, envia y consulta autorizacion del documento de traslado."
+  icon="local_shipping"
+/>
+
+@if (feedback(); as message) {
+  <p class="feedback" [class]="'feedback feedback--' + message.tone">{{ message.message }}</p>
+}
+
+<form class="invoice-layout" [formGroup]="guiaForm">
+  <section class="card stack">
+    <div class="section-title">
+      <div>
+        <h2>Informacion del Comprobante</h2>
+        <p>Secuencial, fecha y punto de emision</p>
+      </div>
+    </div>
+    <div class="form-grid">
+      <div class="field">
+        <label for="establecimientoId">Establecimiento</label>
+        <p-select
+          inputId="establecimientoId"
+          formControlName="establecimientoId"
+          [options]="establecimientoOptions()"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Seleccione establecimiento"
+          styleClass="prime-control"
+          (onChange)="selectEstablecimiento($event.value)"
+        />
+      </div>
+      <div class="field">
+        <label for="puntoEmisionId">Punto de Emision</label>
+        <p-select
+          inputId="puntoEmisionId"
+          formControlName="puntoEmisionId"
+          [options]="puntoEmisionOptions()"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Seleccione punto"
+          styleClass="prime-control"
+        />
+      </div>
+      <div class="field">
+        <label for="fechaEmision">Fecha de Emision</label>
+        <p-datepicker
+          inputId="fechaEmision"
+          formControlName="fechaEmision"
+          dateFormat="yy-mm-dd"
+          dataType="string"
+          [showIcon]="true"
+          styleClass="prime-control"
+        />
+      </div>
+    </div>
+  </section>
+
+  <section class="card stack" formGroupName="transporte">
+    <div class="section-title">
+      <div>
+        <h2>Transporte</h2>
+        <p>Datos del transportista y vigencia del traslado</p>
+      </div>
+    </div>
+    <div class="form-grid">
+      <div class="field">
+        <label for="choferId">Chofer Registrado</label>
+        <p-select
+          inputId="choferId"
+          formControlName="choferId"
+          [options]="choferOptions()"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Seleccione chofer"
+          styleClass="prime-control"
+          [filter]="true"
+          filterBy="label"
+          (onChange)="selectChofer($event.value)"
+        />
+      </div>
+      <div class="field">
+        <label for="dirPartida">Direccion de Partida</label>
+        <input id="dirPartida" pInputText formControlName="dirPartida" />
+      </div>
+      <div class="field">
+        <label for="razonSocialTransportista">Transportista</label>
+        <input id="razonSocialTransportista" pInputText formControlName="razonSocialTransportista" />
+      </div>
+      <div class="field">
+        <label for="tipoIdentificacionTransportista">Tipo Identificacion</label>
+        <p-select
+          inputId="tipoIdentificacionTransportista"
+          formControlName="tipoIdentificacionTransportista"
+          [options]="tipoIdentificacionOptions"
+          optionLabel="label"
+          optionValue="value"
+          styleClass="prime-control"
+        />
+      </div>
+      <div class="field">
+        <label for="identificacionTransportista">Identificacion</label>
+        <input id="identificacionTransportista" pInputText formControlName="identificacionTransportista" />
+      </div>
+      <div class="field">
+        <label for="fechaIniTransporte">Inicio Transporte</label>
+        <p-datepicker
+          inputId="fechaIniTransporte"
+          formControlName="fechaIniTransporte"
+          dateFormat="yy-mm-dd"
+          dataType="string"
+          [showIcon]="true"
+          styleClass="prime-control"
+        />
+      </div>
+      <div class="field">
+        <label for="fechaFinTransporte">Fin Transporte</label>
+        <p-datepicker
+          inputId="fechaFinTransporte"
+          formControlName="fechaFinTransporte"
+          dateFormat="yy-mm-dd"
+          dataType="string"
+          [showIcon]="true"
+          styleClass="prime-control"
+        />
+      </div>
+      <div class="field">
+        <label for="placa">Placa</label>
+        <input id="placa" pInputText formControlName="placa" />
+      </div>
+      <div class="field">
+        <label for="rise">RISE</label>
+        <input id="rise" pInputText formControlName="rise" />
+      </div>
+    </div>
+  </section>
+
+  <section class="card stack">
+    <div class="section-title">
+      <div>
+        <h2>Destinatario y Sustento</h2>
+        <p>Destino, motivo y documento relacionado</p>
+      </div>
+      <a class="btn btn--secondary" routerLink="/clientes">
+        <span class="material-symbols-outlined">person_add</span>
+        Nuevo Cliente
+      </a>
+    </div>
+    <div class="form-grid">
+      <div class="field">
+        <label for="clienteId">Destinatario</label>
+        <p-select
+          inputId="clienteId"
+          formControlName="clienteId"
+          [options]="clienteOptions()"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Seleccione destinatario"
+          styleClass="prime-control"
+          [filter]="true"
+          filterBy="label"
+          (onChange)="selectCliente($event.value)"
+        />
+      </div>
+      <ng-container formGroupName="destino">
+        <div class="field">
+          <label for="destinatarioDireccion">Direccion Destino</label>
+          <input id="destinatarioDireccion" pInputText formControlName="destinatarioDireccion" />
+        </div>
+        <div class="field">
+          <label for="motivoTraslado">Motivo Traslado</label>
+          <input id="motivoTraslado" pInputText formControlName="motivoTraslado" />
+        </div>
+        <div class="field">
+          <label for="ruta">Ruta</label>
+          <input id="ruta" pInputText formControlName="ruta" />
+        </div>
+        <div class="field">
+          <label for="codDocSustento">Doc. Sustento</label>
+          <p-select
+            inputId="codDocSustento"
+            formControlName="codDocSustento"
+            [options]="documentoSustentoOptions"
+            optionLabel="label"
+            optionValue="value"
+            styleClass="prime-control"
+          />
+        </div>
+        <div class="field">
+          <label for="numDocSustento">Numero Sustento</label>
+          <input id="numDocSustento" pInputText formControlName="numDocSustento" />
+        </div>
+        <div class="field">
+          <label for="numAutDocSustento">Autorizacion Sustento</label>
+          <input id="numAutDocSustento" pInputText formControlName="numAutDocSustento" />
+        </div>
+        <div class="field">
+          <label for="fechaEmisionDocSustento">Fecha Sustento</label>
+          <p-datepicker
+            inputId="fechaEmisionDocSustento"
+            formControlName="fechaEmisionDocSustento"
+            dateFormat="yy-mm-dd"
+            dataType="string"
+            [showIcon]="true"
+            styleClass="prime-control"
+          />
+        </div>
+      </ng-container>
+    </div>
+  </section>
+
+  <section class="card invoice-detail">
+    <div class="section-title">
+      <div>
+        <h2>Detalle de Traslado</h2>
+        <p>Productos, codigos y cantidades transportadas</p>
+      </div>
+      <button class="btn btn--secondary" type="button" (click)="addItem()">
+        <span class="material-symbols-outlined">add</span>
+        Agregar Item
+      </button>
+    </div>
+
+    <div class="invoice-items" formArrayName="detalles">
+      @for (detalle of detalles.controls; track $index; let i = $index) {
+        <div class="invoice-item guide-item" [formGroupName]="i">
+          <div class="field invoice-item__catalog">
+            <label>Catalogo</label>
+            <p-select
+              formControlName="productoId"
+              [options]="productoOptions()"
+              optionLabel="label"
+              optionValue="value"
+              styleClass="prime-control"
+              [filter]="true"
+              filterBy="label"
+              (onChange)="selectProducto(i, $event.value)"
+            />
+          </div>
+          <div class="field invoice-item__code">
+            <label>Codigo Interno</label>
+            <input pInputText formControlName="codigoInterno" />
+          </div>
+          <div class="field invoice-item__description">
+            <label>Descripcion</label>
+            <input pInputText formControlName="descripcion" />
+          </div>
+          <div class="field invoice-item__quantity">
+            <label>Cantidad</label>
+            <p-inputnumber formControlName="cantidad" [min]="0" [minFractionDigits]="2" [maxFractionDigits]="6" styleClass="prime-control" />
+          </div>
+          <div class="field invoice-item__price">
+            <label>Codigo Adicional</label>
+            <input pInputText formControlName="codigoAdicional" />
+          </div>
+          <button class="icon-button" type="button" (click)="removeItem(i)" aria-label="Eliminar item">
+            <span class="material-symbols-outlined">delete</span>
+          </button>
+        </div>
+      }
+    </div>
+  </section>
+
+  <aside class="invoice-summary stack">
+    <section class="card">
+      <div class="section-title">
+        <div>
+          <h2>Resumen</h2>
+          <p>Documento de traslado</p>
+        </div>
+      </div>
+      <div class="total-row"><span>Items</span><strong>{{ totalItems() }}</strong></div>
+      <div class="total-row"><span>Cantidad Total</span><strong>{{ totalCantidad().toFixed(2) }}</strong></div>
+      <div class="total-row total-row--grand"><span>Valor</span><strong>$0.00</strong></div>
+      <div class="invoice-actions">
+        <a class="btn btn--secondary" routerLink="/comprobantes">
+          <span class="material-symbols-outlined">arrow_back</span>
+          Volver
+        </a>
+        <button class="btn btn--primary" type="button" (click)="emitir()" [disabled]="emitting()">
+          <span class="material-symbols-outlined">send</span>
+          {{ emitting() ? 'Enviando...' : 'Emitir y Autorizar' }}
+        </button>
+      </div>
+    </section>
+  </aside>
+</form>

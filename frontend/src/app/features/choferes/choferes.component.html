@@ -1,0 +1,167 @@
+<app-page-header
+  title="Choferes"
+  subtitle="Registra transportistas, vehiculos y capacidad de carga para guias de remision."
+  icon="badge"
+/>
+
+@if (feedback(); as message) {
+  <p class="feedback" [class]="'feedback feedback--' + message.tone">{{ message.message }}</p>
+}
+
+<section class="stats-grid">
+  <app-metric-card title="Choferes" [value]="totalChoferes()" icon="badge" tone="primary" />
+  <app-metric-card title="Activos" [value]="activos()" icon="verified" tone="success" />
+  <app-metric-card title="Refrigerados" [value]="refrigerados()" icon="ac_unit" tone="neutral" />
+  <app-metric-card title="Capacidad" [value]="capacidadTotal()" icon="scale" tone="warning" />
+</section>
+
+<section class="card driver-toolbar">
+  <div>
+    <span class="material-symbols-outlined">local_shipping</span>
+    <strong>TRANSPORTE DE FRUTAS:</strong>
+  </div>
+  <button class="chip is-active" type="button">Todos</button>
+  <button class="chip" type="button">Refrigerados</button>
+  <button class="chip" type="button">Pallets</button>
+  <span class="toolbar-spacer"></span>
+  <button class="btn btn--primary" type="button" (click)="newChofer()">
+    <span class="material-symbols-outlined">add</span>
+    Nuevo Chofer
+  </button>
+</section>
+
+@if (showForm()) {
+  <section class="card driver-form" [formGroup]="choferForm">
+    <div class="section-title">
+      <div>
+        <h2>{{ editingId() ? 'Editar Chofer' : 'Nuevo Chofer' }}</h2>
+        <p>Datos de licencia, vehiculo y capacidad para el traslado.</p>
+      </div>
+    </div>
+    <div class="form-grid">
+      <div class="field">
+        <label for="tipoIdentificacion">Tipo</label>
+        <select id="tipoIdentificacion" formControlName="tipoIdentificacion">
+          <option value="CEDULA">Cedula</option>
+          <option value="RUC">RUC</option>
+          <option value="PASAPORTE">Pasaporte</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="identificacion">Identificacion</label>
+        <input id="identificacion" formControlName="identificacion" />
+      </div>
+      <div class="field">
+        <label for="nombres">Nombres</label>
+        <input id="nombres" formControlName="nombres" />
+      </div>
+      <div class="field">
+        <label for="apellidos">Apellidos</label>
+        <input id="apellidos" formControlName="apellidos" />
+      </div>
+      <div class="field">
+        <label for="licencia">Licencia</label>
+        <input id="licencia" formControlName="licencia" />
+      </div>
+      <div class="field">
+        <label for="telefono">Telefono</label>
+        <input id="telefono" formControlName="telefono" />
+      </div>
+      <div class="field">
+        <label for="correo">Correo</label>
+        <input id="correo" type="email" formControlName="correo" />
+      </div>
+      <div class="field">
+        <label for="placaVehiculo">Placa</label>
+        <input id="placaVehiculo" formControlName="placaVehiculo" />
+      </div>
+      <div class="field">
+        <label for="tipoVehiculo">Vehiculo</label>
+        <input id="tipoVehiculo" formControlName="tipoVehiculo" />
+      </div>
+      <div class="field">
+        <label for="capacidad">Capacidad</label>
+        <input id="capacidad" type="number" min="0" step="0.01" formControlName="capacidad" />
+      </div>
+      <div class="field">
+        <label for="unidadCapacidad">Unidad Capacidad</label>
+        <select id="unidadCapacidad" formControlName="unidadCapacidad">
+          @for (unidad of unidadOptions; track unidad.value) {
+            <option [value]="unidad.value">{{ unidad.label }}</option>
+          }
+        </select>
+      </div>
+      <label class="check-field">
+        <input type="checkbox" formControlName="transportaRefrigerado" />
+        <span>Transporta refrigerado</span>
+      </label>
+    </div>
+    <footer class="form-actions">
+      <button class="btn btn--secondary" type="button" (click)="cancelForm()">Cancelar</button>
+      <button class="btn btn--primary" type="button" (click)="saveChofer()" [disabled]="saving()">
+        <span class="material-symbols-outlined">save</span>
+        {{ saving() ? 'Guardando...' : 'Guardar Chofer' }}
+      </button>
+    </footer>
+  </section>
+}
+
+<section class="table-shell">
+  <div class="table-scroll">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Identificacion</th>
+          <th>Chofer</th>
+          <th>Licencia</th>
+          <th>Vehiculo</th>
+          <th>Capacidad</th>
+          <th>Condicion</th>
+          <th>Estado</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (chofer of choferes(); track chofer.id) {
+          <tr>
+            <td class="mono">{{ chofer.identificacion }}</td>
+            <td>
+              <strong>{{ nombreCompleto(chofer) }}</strong>
+              <small>{{ chofer.telefono || chofer.correo }}</small>
+            </td>
+            <td class="mono">{{ chofer.licencia }}</td>
+            <td>
+              <strong>{{ chofer.placaVehiculo || 'Sin placa' }}</strong>
+              <small>{{ chofer.tipoVehiculo }}</small>
+            </td>
+            <td class="mono">{{ formatQuantity(chofer.capacidad) }} {{ formatUnidad(chofer.unidadCapacidad) }}</td>
+            <td>
+              @if (chofer.transportaRefrigerado) {
+                <span class="driver-tag driver-tag--cold">Frio</span>
+              } @else {
+                <span class="driver-tag">Seco</span>
+              }
+            </td>
+            <td><app-status-badge [status]="chofer.estado" /></td>
+            <td>
+              <span class="actions">
+                <button class="icon-button" type="button" aria-label="Editar" (click)="editChofer(chofer)">
+                  <span class="material-symbols-outlined">edit</span>
+                </button>
+                <button class="icon-button" type="button" aria-label="Inactivar" (click)="deleteChofer(chofer)">
+                  <span class="material-symbols-outlined">delete</span>
+                </button>
+              </span>
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="8">
+              <p class="empty-state">No hay choferes registrados. Crea uno para reutilizarlo en guias de remision.</p>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</section>

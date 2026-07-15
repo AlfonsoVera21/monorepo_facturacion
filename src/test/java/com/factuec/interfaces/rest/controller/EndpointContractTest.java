@@ -13,6 +13,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.factuec.application.usecase.AuthUseCase;
+import com.factuec.application.usecase.ChoferUseCase;
 import com.factuec.application.usecase.ClienteUseCase;
 import com.factuec.application.usecase.ComprobanteUseCase;
 import com.factuec.application.usecase.EmisionConfigUseCase;
@@ -47,6 +48,7 @@ class EndpointContractTest {
     void setUp() {
         AuditLogRepository auditLogRepository = mock(AuditLogRepository.class);
         AuthUseCase authUseCase = mock(AuthUseCase.class);
+        ChoferUseCase choferUseCase = mock(ChoferUseCase.class);
         ClienteUseCase clienteUseCase = mock(ClienteUseCase.class);
         ComprobanteUseCase comprobanteUseCase = mock(ComprobanteUseCase.class);
         EmisionConfigUseCase emisionConfigUseCase = mock(EmisionConfigUseCase.class);
@@ -71,6 +73,7 @@ class EndpointContractTest {
         mockMvc = MockMvcBuilders.standaloneSetup(
                 new AuditLogController(auditLogRepository),
                 new AuthController(authUseCase),
+                new ChoferController(choferUseCase),
                 new ClienteController(clienteUseCase),
                 new ComprobanteController(comprobanteUseCase),
                 new ConfiguracionController(properties),
@@ -112,10 +115,17 @@ class EndpointContractTest {
                 endpoint("PUT /api/clientes/{id}", putJson("/api/clientes/{id}", clienteJson(), ID), "/api/clientes/{id}", ID),
                 endpoint("DELETE /api/clientes/{id}", delete("/api/clientes/{id}", ID), "/api/clientes/{id}", ID),
 
+                endpoint("GET /api/choferes", get("/api/choferes").param("empresaId", EMPRESA_ID.toString()), "/api/choferes"),
+                endpoint("POST /api/choferes", postJson("/api/choferes", choferJson()), "/api/choferes"),
+                endpoint("GET /api/choferes/{id}", get("/api/choferes/{id}", ID), "/api/choferes/{id}", ID),
+                endpoint("PUT /api/choferes/{id}", putJson("/api/choferes/{id}", choferJson(), ID), "/api/choferes/{id}", ID),
+                endpoint("DELETE /api/choferes/{id}", delete("/api/choferes/{id}", ID), "/api/choferes/{id}", ID),
+
                 endpoint("GET /api/comprobantes", get("/api/comprobantes").param("empresaId", EMPRESA_ID.toString()), "/api/comprobantes"),
                 endpoint("GET /api/comprobantes/{id}", get("/api/comprobantes/{id}", ID), "/api/comprobantes/{id}", ID),
                 endpoint("POST /api/comprobantes/facturas/borrador", postJson("/api/comprobantes/facturas/borrador", facturaJson()), "/api/comprobantes/facturas/borrador"),
                 endpoint("POST /api/comprobantes/facturas/emitir", postJson("/api/comprobantes/facturas/emitir", facturaJson()), "/api/comprobantes/facturas/emitir"),
+                endpoint("POST /api/comprobantes/guias-remision/emitir", postJson("/api/comprobantes/guias-remision/emitir", guiaRemisionJson()), "/api/comprobantes/guias-remision/emitir"),
                 endpoint("POST /api/comprobantes/{id}/reenviar-sri", post("/api/comprobantes/{id}/reenviar-sri", ID), "/api/comprobantes/{id}/reenviar-sri", ID),
                 endpoint("POST /api/comprobantes/{id}/consultar-autorizacion", post("/api/comprobantes/{id}/consultar-autorizacion", ID), "/api/comprobantes/{id}/consultar-autorizacion", ID),
                 endpoint("GET /api/comprobantes/{id}/xml", get("/api/comprobantes/{id}/xml", ID), "/api/comprobantes/{id}/xml", ID),
@@ -196,6 +206,12 @@ class EndpointContractTest {
                 """.formatted(EMPRESA_ID);
     }
 
+    private static String choferJson() {
+        return """
+                {"empresaId":"%s","tipoIdentificacion":"CEDULA","identificacion":"0912345678","nombres":"Carlos","apellidos":"Mora","licencia":"LIC-12345","telefono":"0999999999","correo":"chofer@test.local","placaVehiculo":"ABC1234","tipoVehiculo":"Camion refrigerado","capacidad":1200,"unidadCapacidad":"KILOGRAMO","transportaRefrigerado":true,"activo":true}
+                """.formatted(EMPRESA_ID);
+    }
+
     private static String empresaJson() {
         return """
                 {"ruc":"0999999999001","razonSocial":"Empresa Test","nombreComercial":"Empresa Test","direccionMatriz":"Direccion matriz","obligadoContabilidad":false,"ambiente":"PRUEBAS","activo":true}
@@ -228,13 +244,19 @@ class EndpointContractTest {
 
     private static String productoJson() {
         return """
-                {"empresaId":"%s","codigoPrincipal":"P001","nombre":"Producto Test","tipo":"PRODUCTO","precioUnitario":1.00,"tarifaIva":"IVA_15","activo":true}
+                {"empresaId":"%s","codigoPrincipal":"P001","nombre":"Producto Test","tipo":"PRODUCTO","precioUnitario":1.00,"tarifaIva":"IVA_15","stock":25,"unidadMedida":"KILOGRAMO","stockMinimo":5,"pesoPromedioKg":1,"palletizable":true,"unidadesPorPallet":48,"requiereRefrigeracion":true,"activo":true}
                 """.formatted(EMPRESA_ID);
     }
 
     private static String facturaJson() {
         return """
                 {"empresaId":"%s","clienteId":"%s","establecimientoId":"%s","puntoEmisionId":"%s","fechaEmision":"2026-07-13","formaPago":"SIN_UTILIZACION_SISTEMA_FINANCIERO","detalles":[{"codigoPrincipal":"P001","descripcion":"Producto Test","cantidad":1,"precioUnitario":1.00,"descuento":0,"tarifaIva":"IVA_15"}]}
+                """.formatted(EMPRESA_ID, CLIENTE_ID, ESTABLECIMIENTO_ID, PUNTO_ID);
+    }
+
+    private static String guiaRemisionJson() {
+        return """
+                {"empresaId":"%s","clienteId":"%s","establecimientoId":"%s","puntoEmisionId":"%s","fechaEmision":"2026-07-13","dirPartida":"Bodega matriz","razonSocialTransportista":"Transportes Test","tipoIdentificacionTransportista":"RUC","identificacionTransportista":"0999999999001","fechaIniTransporte":"2026-07-13","fechaFinTransporte":"2026-07-14","placa":"ABC1234","destinatarioDireccion":"Direccion destino","motivoTraslado":"Venta","ruta":"Quito - Guayaquil","codDocSustento":"01","numDocSustento":"001-001-000000001","numAutDocSustento":"0607202601099999999900110010010000000011234567811","fechaEmisionDocSustento":"2026-07-13","detalles":[{"codigoInterno":"P001","descripcion":"Producto Test","cantidad":1}]}
                 """.formatted(EMPRESA_ID, CLIENTE_ID, ESTABLECIMIENTO_ID, PUNTO_ID);
     }
 

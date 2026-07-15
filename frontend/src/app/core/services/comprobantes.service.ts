@@ -42,6 +42,13 @@ export class ComprobantesService {
     }).pipe(map(({ comprobante, clientes }) => mapComprobante(comprobante, clientes)));
   }
 
+  emitirGuiaRemision(payload: unknown): Observable<Comprobante> {
+    return forkJoin({
+      comprobante: this.apiService.post<ComprobanteResponseDto>('/comprobantes/guias-remision/emitir', payload),
+      clientes: this.clientesService.list()
+    }).pipe(map(({ comprobante, clientes }) => mapComprobante(comprobante, clientes)));
+  }
+
   downloadRide(id: EntityId): Observable<Blob> {
     return this.apiService.getBlob(`/comprobantes/${id}/ride`);
   }

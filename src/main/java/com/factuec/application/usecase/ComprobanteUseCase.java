@@ -4,6 +4,8 @@ import com.factuec.application.dto.comprobante.ComprobanteResponse;
 import com.factuec.application.dto.comprobante.FacturaDetalleRequest;
 import com.factuec.application.dto.comprobante.FacturaDetalleResponse;
 import com.factuec.application.dto.comprobante.FacturaRequest;
+import com.factuec.application.dto.comprobante.GuiaRemisionDetalleRequest;
+import com.factuec.application.dto.comprobante.GuiaRemisionRequest;
 import com.factuec.application.dto.comprobante.SriMensajeResponse;
 import com.factuec.application.port.out.RideGeneratorPort;
 import com.factuec.application.port.out.SignaturePort;
@@ -15,6 +17,8 @@ import com.factuec.domain.enums.AuditAction;
 import com.factuec.domain.enums.EstadoComprobante;
 import com.factuec.domain.enums.EstadoFirma;
 import com.factuec.domain.enums.EstadoSri;
+import com.factuec.domain.enums.FormaPago;
+import com.factuec.domain.enums.TarifaIva;
 import com.factuec.domain.enums.TipoComprobante;
 import com.factuec.domain.enums.TipoEmision;
 import com.factuec.domain.model.InvoiceLine;
@@ -184,6 +188,40 @@ public class ComprobanteUseCase {
     }
 
     @Transactional
+    public ComprobanteResponse emitirGuiaRemision(GuiaRemisionRequest request) {
+        ComprobanteEntity comprobante = buildGuiaRemision(request, EstadoComprobante.GENERADO);
+        comprobante.setXmlGenerado(xmlGeneratorPort.generateGuiaRemision(comprobante));
+        comprobante = comprobanteRepository.save(comprobante);
+        auditService.log(AuditAction.CREACION_GUIA_REMISION, "Comprobante", comprobante.getId(), "Guia de remision generada", null);
+
+        String xmlFirmado = signaturePort.firmarXml(comprobante.getXmlGenerado(), resolveFirma(comprobante.getEmpresa().getId()));
+        comprobante.setXmlFirmado(xmlFirmado);
+        comprobante.setEstadoInterno(EstadoComprobante.FIRMADO);
+        auditService.log(AuditAction.FIRMA, "Comprobante", comprobante.getId(), "Guia de remision firmada", null);
+
+        SriReceptionResult reception = sriReceptionPort.enviarComprobante(comprobante.getAmbiente(), xmlFirmado);
+        comprobante.setEstadoInterno(EstadoComprobante.ENVIADO);
+        comprobante.setEstadoSri(reception.estado());
+        saveMessages(comprobante, reception.mensajes(), reception.estado());
+        auditService.log(AuditAction.ENVIO_SRI, "Comprobante", comprobante.getId(), "Guia de remision enviada al SRI", reception.estado().name());
+
+        if (reception.estado() != EstadoSri.RECIBIDA) {
+            comprobante.setEstadoInterno(reception.estado() == EstadoSri.DEVUELTA
+                    ? EstadoComprobante.DEVUELTO
+                    : EstadoComprobante.ERROR);
+            return toResponse(comprobanteRepository.save(comprobante));
+        }
+
+        SriAuthorizationResult authorization = sriAuthorizationPort.consultarAutorizacion(comprobante.getAmbiente(), comprobante.getClaveAcceso());
+        applyAuthorization(comprobante, authorization);
+        saveMessages(comprobante, authorization.mensajes(), authorization.estado());
+        ComprobanteEntity saved = comprobanteRepository.save(comprobante);
+        auditService.log(AuditAction.AUTORIZACION, "Comprobante", saved.getId(), "Autorizacion consultada", authorization.estado().name());
+        comprobanteEmailUseCase.registrarYEnviarAutorizado(saved);
+        return toResponse(saved);
+    }
+
+    @Transactional
     public ComprobanteResponse reenviarSri(UUID id) {
         ComprobanteEntity comprobante = findEntity(id);
         if (comprobante.getXmlFirmado() == null || comprobante.getXmlFirmado().isBlank()) {
@@ -256,7 +294,7 @@ public class ComprobanteUseCase {
         PuntoEmisionEntity puntoEmision = puntoEmisionRepository.findByIdAndEstablecimientoId(request.puntoEmisionId(), request.establecimientoId())
                 .orElseThrow(() -> new ResourceNotFoundException("Punto de emision no encontrado para el establecimiento"));
 
-        long secuencial = nextSecuencial(empresa, establecimiento, puntoEmision);
+        long secuencial = nextSecuencial(empresa, establecimiento, puntoEmision, TipoComprobante.FACTURA);
         ComprobanteNumber number = new ComprobanteNumber(establecimiento.getCodigo(), puntoEmision.getCodigo(), secuencial);
         LocalDate fechaEmision = request.fechaEmision() == null ? LocalDate.now() : request.fechaEmision();
         String codigoNumerico = String.format("%08d", ThreadLocalRandom.current().nextInt(100_000_000));
@@ -317,19 +355,89 @@ public class ComprobanteUseCase {
         return comprobante;
     }
 
-    private long nextSecuencial(EmpresaEntity empresa, EstablecimientoEntity establecimiento, PuntoEmisionEntity puntoEmision) {
+    private ComprobanteEntity buildGuiaRemision(GuiaRemisionRequest request, EstadoComprobante estado) {
+        EmpresaEntity empresa = empresaUseCase.findEntity(request.empresaId());
+        ClienteEntity cliente = clienteRepository.findByIdAndEmpresaId(request.clienteId(), request.empresaId())
+                .orElseThrow(() -> new ResourceNotFoundException("Destinatario no encontrado para la empresa"));
+        EstablecimientoEntity establecimiento = establecimientoRepository.findByIdAndEmpresaId(request.establecimientoId(), request.empresaId())
+                .orElseThrow(() -> new ResourceNotFoundException("Establecimiento no encontrado para la empresa"));
+        PuntoEmisionEntity puntoEmision = puntoEmisionRepository.findByIdAndEstablecimientoId(request.puntoEmisionId(), request.establecimientoId())
+                .orElseThrow(() -> new ResourceNotFoundException("Punto de emision no encontrado para el establecimiento"));
+
+        LocalDate fechaEmision = request.fechaEmision() == null ? LocalDate.now() : request.fechaEmision();
+        validateTransportDates(fechaEmision, request.fechaIniTransporte(), request.fechaFinTransporte());
+
+        long secuencial = nextSecuencial(empresa, establecimiento, puntoEmision, TipoComprobante.GUIA_REMISION);
+        ComprobanteNumber number = new ComprobanteNumber(establecimiento.getCodigo(), puntoEmision.getCodigo(), secuencial);
+        String codigoNumerico = String.format("%08d", ThreadLocalRandom.current().nextInt(100_000_000));
+        String claveAcceso = accessKeyGenerator.generate(
+                fechaEmision,
+                TipoComprobante.GUIA_REMISION,
+                empresa.getRuc(),
+                empresa.getAmbiente(),
+                number,
+                codigoNumerico,
+                TipoEmision.NORMAL);
+
+        ComprobanteEntity comprobante = new ComprobanteEntity();
+        comprobante.setEmpresa(empresa);
+        comprobante.setCliente(cliente);
+        comprobante.setEstablecimiento(establecimiento);
+        comprobante.setPuntoEmision(puntoEmision);
+        comprobante.setTipoComprobante(TipoComprobante.GUIA_REMISION);
+        comprobante.setSecuencial(secuencial);
+        comprobante.setNumeroCompleto(number.formatted());
+        comprobante.setFechaEmision(fechaEmision);
+        comprobante.setAmbiente(empresa.getAmbiente());
+        comprobante.setTipoEmision(TipoEmision.NORMAL);
+        comprobante.setClaveAcceso(claveAcceso);
+        comprobante.setEstadoInterno(estado);
+        comprobante.setEstadoSri(EstadoSri.PENDIENTE);
+        comprobante.setFormaPago(FormaPago.SIN_UTILIZACION_SISTEMA_FINANCIERO);
+        comprobante.setSubtotal0(BigDecimal.ZERO);
+        comprobante.setSubtotalIva(BigDecimal.ZERO);
+        comprobante.setDescuentoTotal(BigDecimal.ZERO);
+        comprobante.setIvaTotal(BigDecimal.ZERO);
+        comprobante.setIceTotal(BigDecimal.ZERO);
+        comprobante.setTotal(BigDecimal.ZERO);
+        comprobante.setGuiaDirPartida(request.dirPartida());
+        comprobante.setGuiaRazonSocialTransportista(request.razonSocialTransportista());
+        comprobante.setGuiaTipoIdentificacionTransportista(request.tipoIdentificacionTransportista());
+        comprobante.setGuiaIdentificacionTransportista(request.identificacionTransportista());
+        comprobante.setGuiaRise(request.rise());
+        comprobante.setGuiaFechaIniTransporte(request.fechaIniTransporte());
+        comprobante.setGuiaFechaFinTransporte(request.fechaFinTransporte());
+        comprobante.setGuiaPlaca(request.placa());
+        comprobante.setGuiaDestinatarioDireccion(defaultText(request.destinatarioDireccion(), cliente.getDireccion()));
+        comprobante.setGuiaMotivoTraslado(request.motivoTraslado());
+        comprobante.setGuiaDocAduaneroUnico(request.docAduaneroUnico());
+        comprobante.setGuiaCodEstabDestino(request.codEstabDestino());
+        comprobante.setGuiaRuta(request.ruta());
+        comprobante.setGuiaCodDocSustento(request.codDocSustento());
+        comprobante.setGuiaNumDocSustento(request.numDocSustento());
+        comprobante.setGuiaNumAutDocSustento(request.numAutDocSustento());
+        comprobante.setGuiaFechaEmisionDocSustento(request.fechaEmisionDocSustento());
+        setAuthenticatedCreator(comprobante);
+
+        request.detalles().stream()
+                .map(detalle -> toDetalleGuia(detalle, request.empresaId()))
+                .forEach(comprobante::addDetalle);
+        return comprobante;
+    }
+
+    private long nextSecuencial(EmpresaEntity empresa, EstablecimientoEntity establecimiento, PuntoEmisionEntity puntoEmision, TipoComprobante tipoComprobante) {
         SecuencialEntity secuencial = secuencialRepository
                 .findByEmpresaIdAndEstablecimientoIdAndPuntoEmisionIdAndTipoComprobante(
                         empresa.getId(),
                         establecimiento.getId(),
                         puntoEmision.getId(),
-                        TipoComprobante.FACTURA)
+                        tipoComprobante)
                 .orElseGet(() -> {
                     SecuencialEntity entity = new SecuencialEntity();
                     entity.setEmpresa(empresa);
                     entity.setEstablecimiento(establecimiento);
                     entity.setPuntoEmision(puntoEmision);
-                    entity.setTipoComprobante(TipoComprobante.FACTURA);
+                    entity.setTipoComprobante(tipoComprobante);
                     entity.setUltimoSecuencial(0);
                     return entity;
                 });
@@ -379,6 +487,45 @@ public class ComprobanteUseCase {
         return detalle;
     }
 
+    private ComprobanteDetalleEntity toDetalleGuia(GuiaRemisionDetalleRequest request, UUID empresaId) {
+        ProductoEntity producto = request.productoId() == null ? null : productoRepository.findById(request.productoId())
+                .orElseThrow(() -> new ResourceNotFoundException("Producto no encontrado"));
+        if (producto != null && !producto.getEmpresa().getId().equals(empresaId)) {
+            throw new BusinessException("El producto no pertenece a la empresa emisora");
+        }
+        String codigo = producto != null ? producto.getCodigoPrincipal() : request.codigoInterno();
+        String descripcion = producto != null ? producto.getNombre() : request.descripcion();
+        if (codigo == null || codigo.isBlank() || descripcion == null || descripcion.isBlank()) {
+            throw new BusinessException("Cada detalle de guia requiere producto o codigo interno y descripcion");
+        }
+
+        ComprobanteDetalleEntity detalle = new ComprobanteDetalleEntity();
+        detalle.setProducto(producto);
+        detalle.setCodigoPrincipal(codigo);
+        detalle.setCodigoAuxiliar(producto != null ? producto.getCodigoAuxiliar() : request.codigoAdicional());
+        detalle.setDescripcion(descripcion);
+        detalle.setCantidad(request.cantidad().setScale(6, RoundingMode.HALF_UP));
+        detalle.setPrecioUnitario(BigDecimal.ZERO.setScale(4, RoundingMode.HALF_UP));
+        detalle.setDescuento(BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP));
+        detalle.setTarifaIva(TarifaIva.IVA_0);
+        detalle.setSubtotal(BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP));
+        detalle.setIva(BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP));
+        detalle.setTotal(BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP));
+        return detalle;
+    }
+
+    private void validateTransportDates(LocalDate fechaEmision, LocalDate fechaIniTransporte, LocalDate fechaFinTransporte) {
+        if (fechaIniTransporte == null || fechaFinTransporte == null) {
+            throw new BusinessException("La guia requiere fecha de inicio y fin de transporte");
+        }
+        if (fechaIniTransporte.isBefore(fechaEmision)) {
+            throw new BusinessException("La fecha de inicio de transporte no puede ser menor a la fecha de emision");
+        }
+        if (fechaFinTransporte.isBefore(fechaIniTransporte)) {
+            throw new BusinessException("La fecha fin de transporte no puede ser menor a la fecha de inicio");
+        }
+    }
+
     private void applyAuthorization(ComprobanteEntity comprobante, SriAuthorizationResult authorization) {
         comprobante.setEstadoSri(authorization.estado());
         comprobante.setNumeroAutorizacion(authorization.numeroAutorizacion());
@@ -425,6 +572,16 @@ public class ComprobanteUseCase {
             return value;
         }
         return value.substring(0, maxLength);
+    }
+
+    private String defaultText(String value, String fallback) {
+        if (value != null && !value.isBlank()) {
+            return value;
+        }
+        if (fallback != null && !fallback.isBlank()) {
+            return fallback;
+        }
+        return "NA";
     }
 
     private FirmaConfig resolveFirma(UUID empresaId) {
@@ -493,7 +650,24 @@ public class ComprobanteUseCase {
                 entity.getId() == null
                         ? List.of()
                         : sriMensajeRepository.findByComprobanteId(entity.getId()).stream().map(this::toSriMensajeResponse).toList(),
-                entity.getDetalles().stream().map(this::toDetalleResponse).toList());
+                entity.getDetalles().stream().map(this::toDetalleResponse).toList(),
+                entity.getGuiaDirPartida(),
+                entity.getGuiaRazonSocialTransportista(),
+                entity.getGuiaTipoIdentificacionTransportista(),
+                entity.getGuiaIdentificacionTransportista(),
+                entity.getGuiaRise(),
+                entity.getGuiaFechaIniTransporte(),
+                entity.getGuiaFechaFinTransporte(),
+                entity.getGuiaPlaca(),
+                entity.getGuiaDestinatarioDireccion(),
+                entity.getGuiaMotivoTraslado(),
+                entity.getGuiaDocAduaneroUnico(),
+                entity.getGuiaCodEstabDestino(),
+                entity.getGuiaRuta(),
+                entity.getGuiaCodDocSustento(),
+                entity.getGuiaNumDocSustento(),
+                entity.getGuiaNumAutDocSustento(),
+                entity.getGuiaFechaEmisionDocSustento());
     }
 
     private SriMensajeResponse toSriMensajeResponse(SriMensajeEntity mensaje) {

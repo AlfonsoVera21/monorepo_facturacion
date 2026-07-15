@@ -1,5 +1,6 @@
 import {
   Cliente,
+  Chofer,
   Comprobante,
   ComprobanteDetalle,
   Empresa,
@@ -13,6 +14,7 @@ import {
 } from '../models/factuec.models';
 import {
   ClienteResponseDto,
+  ChoferResponseDto,
   ComprobanteResponseDto,
   EmpresaResponseDto,
   EstablecimientoResponseDto,
@@ -103,6 +105,31 @@ export function mapProducto(dto: ProductoResponseDto): Producto {
     precioUnitario: Number(dto.precioUnitario || 0),
     tarifaIva: mapTarifaIva(dto.tarifaIva),
     stock: dto.stock === undefined || dto.stock === null ? undefined : Number(dto.stock),
+    unidadMedida: dto.unidadMedida || 'UNIDAD',
+    stockMinimo: Number(dto.stockMinimo || 0),
+    pesoPromedioKg: dto.pesoPromedioKg === undefined || dto.pesoPromedioKg === null ? undefined : Number(dto.pesoPromedioKg),
+    palletizable: Boolean(dto.palletizable),
+    unidadesPorPallet: dto.unidadesPorPallet === undefined || dto.unidadesPorPallet === null ? undefined : Number(dto.unidadesPorPallet),
+    requiereRefrigeracion: Boolean(dto.requiereRefrigeracion),
+    estado: dto.activo ? 'ACTIVO' : 'INACTIVO'
+  };
+}
+
+export function mapChofer(dto: ChoferResponseDto): Chofer {
+  return {
+    id: dto.id,
+    tipoIdentificacion: dto.tipoIdentificacion,
+    identificacion: dto.identificacion,
+    nombres: dto.nombres,
+    apellidos: dto.apellidos || '',
+    licencia: dto.licencia,
+    telefono: dto.telefono || '',
+    correo: dto.correo || '',
+    placaVehiculo: dto.placaVehiculo || '',
+    tipoVehiculo: dto.tipoVehiculo || '',
+    capacidad: dto.capacidad === undefined || dto.capacidad === null ? undefined : Number(dto.capacidad),
+    unidadCapacidad: dto.unidadCapacidad,
+    transportaRefrigerado: dto.transportaRefrigerado,
     estado: dto.activo ? 'ACTIVO' : 'INACTIVO'
   };
 }
@@ -126,6 +153,23 @@ export function mapComprobante(dto: ComprobanteResponseDto, clientes: Cliente[] 
     numeroAutorizacion: dto.numeroAutorizacion,
     fechaAutorizacion: dto.fechaAutorizacion,
     ambiente: dto.ambiente,
+    guiaDirPartida: dto.guiaDirPartida,
+    guiaRazonSocialTransportista: dto.guiaRazonSocialTransportista,
+    guiaTipoIdentificacionTransportista: dto.guiaTipoIdentificacionTransportista,
+    guiaIdentificacionTransportista: dto.guiaIdentificacionTransportista,
+    guiaRise: dto.guiaRise,
+    guiaFechaIniTransporte: dto.guiaFechaIniTransporte,
+    guiaFechaFinTransporte: dto.guiaFechaFinTransporte,
+    guiaPlaca: dto.guiaPlaca,
+    guiaDestinatarioDireccion: dto.guiaDestinatarioDireccion,
+    guiaMotivoTraslado: dto.guiaMotivoTraslado,
+    guiaDocAduaneroUnico: dto.guiaDocAduaneroUnico,
+    guiaCodEstabDestino: dto.guiaCodEstabDestino,
+    guiaRuta: dto.guiaRuta,
+    guiaCodDocSustento: dto.guiaCodDocSustento,
+    guiaNumDocSustento: dto.guiaNumDocSustento,
+    guiaNumAutDocSustento: dto.guiaNumAutDocSustento,
+    guiaFechaEmisionDocSustento: dto.guiaFechaEmisionDocSustento,
     detalles,
     pagos: [
       {
@@ -179,13 +223,7 @@ function mapTarifaIva(tarifa: ProductoResponseDto['tarifaIva']): Producto['tarif
 }
 
 function mapTipoComprobante(tipo: ComprobanteResponseDto['tipoComprobante']): Comprobante['tipo'] {
-  if (tipo === 'NOTA_CREDITO') {
-    return 'NOTA_CREDITO';
-  }
-  if (tipo === 'RETENCION') {
-    return 'RETENCION';
-  }
-  return 'FACTURA';
+  return tipo;
 }
 
 function createPlaceholderCliente(clienteId: string): Cliente {

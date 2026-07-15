@@ -2,7 +2,7 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { finalize } from 'rxjs';
 
-import { EntityId, Producto, TipoProducto, UnidadMedidaInventario } from '../../core/models/factuec.models';
+import { EntityId, Producto, UnidadMedidaInventario } from '../../core/models/factuec.models';
 import { EmpresaService } from '../../core/services/empresa.service';
 import { ProductoPayload, ProductosService, TarifaIvaBackend } from '../../core/services/productos.service';
 import { MetricCardComponent } from '../../shared/components/metric-card/metric-card.component';
@@ -12,12 +12,12 @@ import { StatusBadgeComponent } from '../../shared/components/status-badge/statu
 type FeedbackTone = 'success' | 'danger' | 'warning';
 
 @Component({
-  selector: 'app-productos',
+  selector: 'app-inventario',
   imports: [ReactiveFormsModule, PageHeaderComponent, MetricCardComponent, StatusBadgeComponent],
-  templateUrl: './productos.component.html',
-  styleUrl: './productos.component.scss'
+  templateUrl: './inventario.component.html',
+  styleUrl: './inventario.component.scss'
 })
-export class ProductosComponent implements OnInit {
+export class InventarioComponent implements OnInit {
   private readonly productosService = inject(ProductosService);
   private readonly empresaService = inject(EmpresaService);
   private readonly formBuilder = inject(FormBuilder);
@@ -28,18 +28,16 @@ export class ProductosComponent implements OnInit {
   protected readonly editingId = signal<EntityId | null>(null);
   protected readonly saving = signal(false);
   protected readonly feedback = signal<{ tone: FeedbackTone; message: string } | null>(null);
-  protected readonly totalItems = computed(() => this.productos().length.toString());
-  protected readonly servicios = computed(() => this.productos().filter((producto) => producto.tipo === 'SERVICIO').length.toString());
-  protected readonly productosActivos = computed(() => this.productos().filter((producto) => producto.estado === 'ACTIVO').length.toString());
-  protected readonly stockCritico = computed(() => this.productos()
-    .filter((producto) => Number(producto.stock || 0) <= Number(producto.stockMinimo || 0) && producto.tipo === 'PRODUCTO')
+  protected readonly inventario = computed(() => this.productos().filter((producto) => producto.tipo === 'PRODUCTO'));
+  protected readonly stockTotal = computed(() => this.formatQuantity(
+    this.inventario().reduce((total, producto) => total + Number(producto.stock || 0), 0)
+  ));
+  protected readonly stockCritico = computed(() => this.inventario()
+    .filter((producto) => Number(producto.stock || 0) <= Number(producto.stockMinimo || 0))
     .length
     .toString());
-  protected readonly stockTotal = computed(() => this.formatStock(
-    this.productos()
-      .filter((producto) => producto.tipo === 'PRODUCTO')
-      .reduce((total, producto) => total + Number(producto.stock || 0), 0)
-  ));
+  protected readonly palletizables = computed(() => this.inventario().filter((producto) => producto.palletizable).length.toString());
+  protected readonly refrigerados = computed(() => this.inventario().filter((producto) => producto.requiereRefrigeracion).length.toString());
   protected readonly unidadOptions: Array<{ label: string; value: UnidadMedidaInventario }> = [
     { label: 'Kilogramos', value: 'KILOGRAMO' },
     { label: 'Gramos', value: 'GRAMO' },
@@ -55,62 +53,60 @@ export class ProductosComponent implements OnInit {
     { label: 'Unidades', value: 'UNIDAD' }
   ];
 
-  protected readonly productoForm = this.formBuilder.nonNullable.group({
-    codigoPrincipal: ['SERV-001', Validators.required],
-    nombre: ['Servicio de prueba', Validators.required],
-    descripcion: ['Servicio de prueba para facturacion electronica'],
-    tipo: ['SERVICIO', Validators.required],
-    precioUnitario: [10, [Validators.required, Validators.min(0)]],
-    tarifaIva: ['IVA_15', Validators.required],
+  protected readonly inventarioForm = this.formBuilder.nonNullable.group({
+    codigoPrincipal: ['FRU-001', Validators.required],
+    nombre: ['Banano Cavendish', Validators.required],
+    categoria: ['Frutas'],
+    descripcion: ['Fruta fresca para traslado'],
+    precioUnitario: [0, [Validators.required, Validators.min(0)]],
+    tarifaIva: ['IVA_0' as TarifaIvaBackend, Validators.required],
     stock: [0],
-    unidadMedida: ['UNIDAD' as UnidadMedidaInventario, Validators.required],
+    unidadMedida: ['KILOGRAMO' as UnidadMedidaInventario, Validators.required],
     stockMinimo: [0],
-    pesoPromedioKg: [0],
-    palletizable: [false],
-    unidadesPorPallet: [0],
+    pesoPromedioKg: [1],
+    palletizable: [true],
+    unidadesPorPallet: [48],
     requiereRefrigeracion: [false],
-    categoria: ['Servicios'],
     activo: [true]
   });
 
   ngOnInit(): void {
     this.empresaService.getEmpresa().subscribe((empresa) => this.empresaId.set(empresa?.id ?? null));
-    this.loadProductos();
+    this.loadInventario();
   }
 
-  protected newProducto(): void {
+  protected newItem(): void {
     if (!this.empresaId()) {
       this.feedback.set({ tone: 'warning', message: 'Primero crea la empresa emisora en la pantalla Empresa.' });
       return;
     }
     this.editingId.set(null);
-    this.productoForm.reset({
-      codigoPrincipal: `SERV-${String(this.productos().length + 1).padStart(3, '0')}`,
-      nombre: 'Servicio de prueba',
-      descripcion: 'Servicio de prueba para facturacion electronica',
-      tipo: 'SERVICIO',
-      precioUnitario: 10,
-      tarifaIva: 'IVA_15',
+    this.inventarioForm.reset({
+      codigoPrincipal: `FRU-${String(this.inventario().length + 1).padStart(3, '0')}`,
+      nombre: 'Banano Cavendish',
+      categoria: 'Frutas',
+      descripcion: 'Fruta fresca para traslado',
+      precioUnitario: 0,
+      tarifaIva: 'IVA_0',
       stock: 0,
-      unidadMedida: 'UNIDAD',
+      unidadMedida: 'KILOGRAMO',
       stockMinimo: 0,
-      pesoPromedioKg: 0,
-      palletizable: false,
-      unidadesPorPallet: 0,
+      pesoPromedioKg: 1,
+      palletizable: true,
+      unidadesPorPallet: 48,
       requiereRefrigeracion: false,
-      categoria: 'Servicios',
       activo: true
     });
     this.showForm.set(true);
   }
 
-  protected editProducto(producto: Producto): void {
+  protected editItem(producto: Producto): void {
     this.editingId.set(producto.id);
-    this.productoForm.reset({
+    this.inventarioForm.reset({
       codigoPrincipal: producto.codigo,
       nombre: producto.nombre,
+      categoria: producto.categoria,
       descripcion: producto.categoria,
-      tipo: producto.tipo,
       precioUnitario: producto.precioUnitario,
       tarifaIva: this.toBackendTarifa(producto.tarifaIva),
       stock: producto.stock || 0,
@@ -120,7 +116,6 @@ export class ProductosComponent implements OnInit {
       palletizable: producto.palletizable,
       unidadesPorPallet: producto.unidadesPorPallet || 0,
       requiereRefrigeracion: producto.requiereRefrigeracion,
-      categoria: producto.categoria,
       activo: producto.estado === 'ACTIVO'
     });
     this.showForm.set(true);
@@ -131,15 +126,15 @@ export class ProductosComponent implements OnInit {
     this.editingId.set(null);
   }
 
-  protected saveProducto(): void {
+  protected saveItem(): void {
     const empresaId = this.empresaId();
     if (!empresaId) {
       this.feedback.set({ tone: 'warning', message: 'Primero crea la empresa emisora.' });
       return;
     }
-    if (this.productoForm.invalid) {
-      this.productoForm.markAllAsTouched();
-      this.feedback.set({ tone: 'danger', message: 'Completa codigo, nombre, precio e IVA.' });
+    if (this.inventarioForm.invalid) {
+      this.inventarioForm.markAllAsTouched();
+      this.feedback.set({ tone: 'danger', message: 'Completa codigo, nombre y unidad de medida.' });
       return;
     }
 
@@ -151,35 +146,51 @@ export class ProductosComponent implements OnInit {
       next: () => {
         this.showForm.set(false);
         this.editingId.set(null);
-        this.feedback.set({ tone: 'success', message: 'Producto o servicio guardado correctamente.' });
-        this.loadProductos();
+        this.feedback.set({ tone: 'success', message: 'Item de inventario guardado correctamente.' });
+        this.loadInventario();
       },
-      error: () => this.feedback.set({ tone: 'danger', message: 'No se pudo guardar el producto. Revisa que el codigo no exista previamente.' })
+      error: () => this.feedback.set({ tone: 'danger', message: 'No se pudo guardar el item. Revisa que el codigo no exista previamente.' })
     });
   }
 
-  protected deleteProducto(producto: Producto): void {
+  protected deleteItem(producto: Producto): void {
     this.productosService.delete(producto.id).subscribe({
       next: () => {
-        this.feedback.set({ tone: 'success', message: 'Producto inactivado.' });
-        this.loadProductos();
+        this.feedback.set({ tone: 'success', message: 'Item de inventario inactivado.' });
+        this.loadInventario();
       },
-      error: () => this.feedback.set({ tone: 'danger', message: 'No se pudo inactivar el producto.' })
+      error: () => this.feedback.set({ tone: 'danger', message: 'No se pudo inactivar el item.' })
     });
   }
 
-  private loadProductos(): void {
+  protected formatUnidad(unidad: UnidadMedidaInventario | undefined): string {
+    return this.unidadOptions.find((item) => item.value === unidad)?.label || 'Unidades';
+  }
+
+  protected formatQuantity(value: number | undefined): string {
+    const quantity = Number(value || 0);
+    return new Intl.NumberFormat('es-EC', {
+      minimumFractionDigits: quantity % 1 === 0 ? 0 : 2,
+      maximumFractionDigits: 2
+    }).format(quantity);
+  }
+
+  protected stockStatus(producto: Producto): 'Critico' | 'Disponible' {
+    return Number(producto.stock || 0) <= Number(producto.stockMinimo || 0) ? 'Critico' : 'Disponible';
+  }
+
+  private loadInventario(): void {
     this.productosService.list().subscribe((items) => this.productos.set(items));
   }
 
   private toPayload(empresaId: EntityId): ProductoPayload {
-    const value = this.productoForm.getRawValue();
+    const value = this.inventarioForm.getRawValue();
     return {
       empresaId,
       codigoPrincipal: value.codigoPrincipal,
       nombre: value.nombre,
       descripcion: value.descripcion || undefined,
-      tipo: value.tipo as TipoProducto,
+      tipo: 'PRODUCTO',
       precioUnitario: Number(value.precioUnitario || 0),
       tarifaIva: value.tarifaIva as TarifaIvaBackend,
       stock: Number(value.stock || 0),
@@ -189,7 +200,7 @@ export class ProductosComponent implements OnInit {
       palletizable: value.palletizable,
       unidadesPorPallet: Number(value.unidadesPorPallet || 0) || undefined,
       requiereRefrigeracion: value.requiereRefrigeracion,
-      categoria: value.categoria || undefined,
+      categoria: value.categoria || 'Frutas',
       activo: value.activo
     };
   }
@@ -208,17 +219,5 @@ export class ProductosComponent implements OnInit {
       return 'EXENTO_IVA';
     }
     return 'IVA_15';
-  }
-
-  protected formatStock(value: number | undefined): string {
-    const stock = Number(value || 0);
-    return new Intl.NumberFormat('es-EC', {
-      minimumFractionDigits: stock % 1 === 0 ? 0 : 2,
-      maximumFractionDigits: 2
-    }).format(stock);
-  }
-
-  protected formatUnidad(unidad: UnidadMedidaInventario | undefined): string {
-    return this.unidadOptions.find((item) => item.value === unidad)?.label || 'Unidades';
   }
 }

@@ -3,11 +3,13 @@ package com.factuec.application.usecase;
 import com.factuec.application.dto.producto.ProductoRequest;
 import com.factuec.application.dto.producto.ProductoResponse;
 import com.factuec.application.mapper.ProductoMapper;
+import com.factuec.domain.enums.UnidadMedidaInventario;
 import com.factuec.infrastructure.persistence.entity.EmpresaEntity;
 import com.factuec.infrastructure.persistence.entity.ProductoEntity;
 import com.factuec.infrastructure.persistence.repository.ProductoRepository;
 import com.factuec.shared.exception.BusinessException;
 import com.factuec.shared.exception.ResourceNotFoundException;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
@@ -44,6 +46,7 @@ public class ProductoUseCase {
         }
         ProductoEntity entity = productoMapper.toEntity(request);
         entity.setEmpresa(empresa);
+        applyInventoryDefaults(entity);
         return productoMapper.toResponse(productoRepository.save(entity));
     }
 
@@ -54,6 +57,7 @@ public class ProductoUseCase {
         if (!entity.getEmpresa().getId().equals(request.empresaId())) {
             entity.setEmpresa(empresaUseCase.findEntity(request.empresaId()));
         }
+        applyInventoryDefaults(entity);
         return productoMapper.toResponse(productoRepository.save(entity));
     }
 
@@ -67,5 +71,14 @@ public class ProductoUseCase {
     public ProductoEntity findEntity(UUID id) {
         return productoRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Producto no encontrado"));
+    }
+
+    private void applyInventoryDefaults(ProductoEntity entity) {
+        if (entity.getUnidadMedida() == null) {
+            entity.setUnidadMedida(UnidadMedidaInventario.UNIDAD);
+        }
+        if (entity.getStockMinimo() == null) {
+            entity.setStockMinimo(BigDecimal.ZERO);
+        }
     }
 }

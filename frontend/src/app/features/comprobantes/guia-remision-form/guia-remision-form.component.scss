@@ -1,0 +1,17 @@
+@use "../form/factura-form.component.scss";
+
+.guide-item {
+  grid-template-columns: repeat(4, minmax(0, 1fr)) 36px;
+}
+
+@media (max-width: 900px) {
+  .guide-item {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .guide-item {
+    grid-template-columns: 1fr;
+  }
+}

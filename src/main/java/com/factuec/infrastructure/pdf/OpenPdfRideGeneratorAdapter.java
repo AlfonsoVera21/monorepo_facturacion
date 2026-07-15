@@ -2,6 +2,7 @@ package com.factuec.infrastructure.pdf;
 
 import com.factuec.application.port.out.RideGeneratorPort;
 import com.factuec.domain.enums.TarifaIva;
+import com.factuec.domain.enums.TipoComprobante;
 import com.factuec.infrastructure.persistence.entity.ComprobanteDetalleEntity;
 import com.factuec.infrastructure.persistence.entity.ComprobanteEntity;
 import com.factuec.infrastructure.persistence.entity.ComprobantePagoEntity;
@@ -98,7 +99,7 @@ public class OpenPdfRideGeneratorAdapter implements RideGeneratorPort {
     private PdfPTable customerSection(ComprobanteEntity comprobante) {
         PdfPTable table = new PdfPTable(new float[]{1.25f, 3.1f, 1f, 1.35f});
         table.setWidthPercentage(100);
-        table.addCell(labelCell("Razon Social / Nombres y Apellidos:"));
+        table.addCell(labelCell(isGuiaRemision(comprobante) ? "Destinatario:" : "Razon Social / Nombres y Apellidos:"));
         table.addCell(valueCell(comprobante.getCliente().getRazonSocial()));
         table.addCell(labelCell("Identificacion:"));
         table.addCell(valueCell(comprobante.getCliente().getIdentificacion()));
@@ -106,14 +107,19 @@ public class OpenPdfRideGeneratorAdapter implements RideGeneratorPort {
         table.addCell(valueCell(SRI_DATE.format(comprobante.getFechaEmision())));
         table.addCell(labelCell("Guia Remision:"));
         table.addCell(valueCell(""));
-        table.addCell(labelCell("Direccion:"));
-        table.addCell(spanCell(value(comprobante.getCliente().getDireccion(), "NA"), 3));
+        table.addCell(labelCell(isGuiaRemision(comprobante) ? "Direccion Destino:" : "Direccion:"));
+        table.addCell(spanCell(value(isGuiaRemision(comprobante)
+                ? value(comprobante.getGuiaDestinatarioDireccion(), comprobante.getCliente().getDireccion())
+                : comprobante.getCliente().getDireccion(), "NA"), 3));
         table.addCell(labelCell("Correo:"));
         table.addCell(spanCell(value(comprobante.getCliente().getCorreo(), "NA"), 3));
         return bordered(table);
     }
 
     private PdfPTable detailsTable(ComprobanteEntity comprobante) {
+        if (isGuiaRemision(comprobante)) {
+            return guiaDetailsTable(comprobante);
+        }
         PdfPTable table = new PdfPTable(new float[]{1.2f, 1f, 0.8f, 3.1f, 1f, 1f, 1f, 1f});
         table.setWidthPercentage(100);
         table.setHeaderRows(1);
@@ -140,7 +146,32 @@ public class OpenPdfRideGeneratorAdapter implements RideGeneratorPort {
         return table;
     }
 
+    private PdfPTable guiaDetailsTable(ComprobanteEntity comprobante) {
+        PdfPTable table = new PdfPTable(new float[]{1.2f, 1f, 0.8f, 4.1f});
+        table.setWidthPercentage(100);
+        table.setHeaderRows(1);
+
+        addHeader(table, "Cod. Interno");
+        addHeader(table, "Cod. Adicional");
+        addHeader(table, "Cantidad");
+        addHeader(table, "Descripcion");
+
+        for (ComprobanteDetalleEntity detalle : comprobante.getDetalles()) {
+            addCell(table, detalle.getCodigoPrincipal(), Element.ALIGN_CENTER);
+            addCell(table, value(detalle.getCodigoAuxiliar(), ""), Element.ALIGN_CENTER);
+            addCell(table, number(detalle.getCantidad(), 6), Element.ALIGN_RIGHT);
+            addCell(table, detalle.getDescripcion(), Element.ALIGN_LEFT);
+        }
+        return table;
+    }
+
     private PdfPTable summarySection(ComprobanteEntity comprobante) {
+        if (isGuiaRemision(comprobante)) {
+            PdfPTable wrapper = new PdfPTable(1);
+            wrapper.setWidthPercentage(100);
+            wrapper.addCell(leftSummary(comprobante));
+            return wrapper;
+        }
         PdfPTable wrapper = new PdfPTable(new float[]{1.45f, 0.75f});
         wrapper.setWidthPercentage(100);
         wrapper.addCell(leftSummary(comprobante));
@@ -165,6 +196,11 @@ public class OpenPdfRideGeneratorAdapter implements RideGeneratorPort {
         additional.addCell(valueCell("Consulte la validez del comprobante en los servicios del SRI."));
         stack.addCell(noBorderElementCell(bordered(additional), 0, 0, 12, 8));
 
+        if (isGuiaRemision(comprobante)) {
+            stack.addCell(noBorderElementCell(bordered(guiaInfoTable(comprobante)), 0, 0, 0, 0));
+            return noBorderElementCell(stack, 0, 0, 0, 0);
+        }
+
         PdfPTable payments = new PdfPTable(new float[]{2.3f, 0.9f, 0.8f, 0.9f});
         payments.setWidthPercentage(100);
         payments.addCell(paymentHeader("Forma Pago"));
@@ -179,6 +215,29 @@ public class OpenPdfRideGeneratorAdapter implements RideGeneratorPort {
         stack.addCell(noBorderElementCell(bordered(payments), 0, 0, 0, 0));
 
         return noBorderElementCell(stack, 0, 0, 0, 8);
+    }
+
+    private PdfPTable guiaInfoTable(ComprobanteEntity comprobante) {
+        PdfPTable guia = new PdfPTable(new float[]{0.8f, 1.8f, 0.8f, 1.8f});
+        guia.setWidthPercentage(100);
+        guia.addCell(sectionTitle("Datos de Traslado", 4));
+        guia.addCell(labelCell("Transportista:"));
+        guia.addCell(valueCell(comprobante.getGuiaRazonSocialTransportista()));
+        guia.addCell(labelCell("Identificacion:"));
+        guia.addCell(valueCell(comprobante.getGuiaIdentificacionTransportista()));
+        guia.addCell(labelCell("Placa:"));
+        guia.addCell(valueCell(comprobante.getGuiaPlaca()));
+        guia.addCell(labelCell("Motivo:"));
+        guia.addCell(valueCell(comprobante.getGuiaMotivoTraslado()));
+        guia.addCell(labelCell("Partida:"));
+        guia.addCell(valueCell(comprobante.getGuiaDirPartida()));
+        guia.addCell(labelCell("Ruta:"));
+        guia.addCell(valueCell(comprobante.getGuiaRuta()));
+        guia.addCell(labelCell("Inicio:"));
+        guia.addCell(valueCell(comprobante.getGuiaFechaIniTransporte() == null ? null : SRI_DATE.format(comprobante.getGuiaFechaIniTransporte())));
+        guia.addCell(labelCell("Fin:"));
+        guia.addCell(valueCell(comprobante.getGuiaFechaFinTransporte() == null ? null : SRI_DATE.format(comprobante.getGuiaFechaFinTransporte())));
+        return guia;
     }
 
     private PdfPCell totalsTable(ComprobanteEntity comprobante) {
@@ -351,7 +410,14 @@ public class OpenPdfRideGeneratorAdapter implements RideGeneratorPort {
     }
 
     private String documentLabel(ComprobanteEntity comprobante) {
+        if (isGuiaRemision(comprobante)) {
+            return "GUIA DE REMISION";
+        }
         return comprobante.getTipoComprobante().name().replace('_', ' ');
+    }
+
+    private boolean isGuiaRemision(ComprobanteEntity comprobante) {
+        return comprobante.getTipoComprobante() == TipoComprobante.GUIA_REMISION;
     }
 
     private ComprobantePagoEntity firstPayment(ComprobanteEntity comprobante) {

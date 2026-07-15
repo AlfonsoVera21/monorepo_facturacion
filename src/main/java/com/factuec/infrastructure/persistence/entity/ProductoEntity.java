@@ -2,6 +2,7 @@ package com.factuec.infrastructure.persistence.entity;
 
 import com.factuec.domain.enums.TarifaIva;
 import com.factuec.domain.enums.TipoProducto;
+import com.factuec.domain.enums.UnidadMedidaInventario;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -53,6 +54,25 @@ public class ProductoEntity extends BaseEntity {
 
     @Column(precision = 14, scale = 4)
     private BigDecimal stock;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "unidad_medida", nullable = false, length = 40)
+    private UnidadMedidaInventario unidadMedida = UnidadMedidaInventario.UNIDAD;
+
+    @Column(name = "stock_minimo", nullable = false, precision = 14, scale = 4)
+    private BigDecimal stockMinimo = BigDecimal.ZERO;
+
+    @Column(name = "peso_promedio_kg", precision = 14, scale = 4)
+    private BigDecimal pesoPromedioKg;
+
+    @Column(nullable = false)
+    private boolean palletizable = false;
+
+    @Column(name = "unidades_por_pallet", precision = 14, scale = 4)
+    private BigDecimal unidadesPorPallet;
+
+    @Column(name = "requiere_refrigeracion", nullable = false)
+    private boolean requiereRefrigeracion = false;
 
     @Column(length = 120)
     private String categoria;

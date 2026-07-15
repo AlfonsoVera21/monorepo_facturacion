@@ -8,6 +8,7 @@ import { AppLayoutComponent } from './core/layout/app-layout/app-layout.componen
 import { HeaderComponent } from './core/layout/header/header.component';
 import { SidebarComponent } from './core/layout/sidebar/sidebar.component';
 import { AuthService } from './core/services/auth.service';
+import { ChoferesService } from './core/services/choferes.service';
 import { ClientesService } from './core/services/clientes.service';
 import { ComprobantesService } from './core/services/comprobantes.service';
 import { ConfiguracionService } from './core/services/configuracion.service';
@@ -18,16 +19,19 @@ import { ProductosService } from './core/services/productos.service';
 import { ReportesService } from './core/services/reportes.service';
 import { SriService } from './core/services/sri.service';
 import { UsuariosService } from './core/services/usuarios.service';
-import { Cliente, Comprobante, DashboardMetric, Empresa, Establecimiento, Producto, Role, User } from './core/models/factuec.models';
+import { Chofer, Cliente, Comprobante, DashboardMetric, Empresa, Establecimiento, Producto, Role, User } from './core/models/factuec.models';
 import { LoginComponent } from './features/auth/login/login.component';
+import { ChoferesComponent } from './features/choferes/choferes.component';
 import { ClientesComponent } from './features/clientes/clientes.component';
 import { ComprobanteDetailComponent } from './features/comprobantes/detail/comprobante-detail.component';
 import { FacturaFormComponent } from './features/comprobantes/form/factura-form.component';
+import { GuiaRemisionFormComponent } from './features/comprobantes/guia-remision-form/guia-remision-form.component';
 import { ComprobantesListComponent } from './features/comprobantes/list/comprobantes-list.component';
 import { ConfiguracionComponent } from './features/configuracion/configuracion.component';
 import { DashboardComponent } from './features/dashboard/dashboard.component';
 import { EmpresaComponent } from './features/empresa/empresa.component';
 import { FirmaElectronicaComponent } from './features/firma-electronica/firma-electronica.component';
+import { InventarioComponent } from './features/inventario/inventario.component';
 import { ProductosComponent } from './features/productos/productos.component';
 import { ReportesComponent } from './features/reportes/reportes.component';
 import { SriMonitorComponent } from './features/sri/monitor/sri-monitor.component';
@@ -271,7 +275,7 @@ describe('SidebarComponent', () => {
     await TestBed.configureTestingModule({ imports: [SidebarComponent], providers: [provideRouter([])] }).compileComponents();
     const fixture = TestBed.createComponent(SidebarComponent);
     fixture.detectChanges();
-    expect(fixture.nativeElement.querySelectorAll('.sidebar__link')).toHaveLength(10);
+    expect(fixture.nativeElement.querySelectorAll('.sidebar__link')).toHaveLength(12);
   });
 
   it('emite evento al colapsar', async () => {
@@ -364,6 +368,40 @@ describe('ProductosComponent', () => {
     const component = TestBed.createComponent(ProductosComponent).componentInstance as any;
     component.ngOnInit();
     component.newProducto();
+    expect(component.feedback()?.tone).toBe('warning');
+  });
+});
+
+describe('ChoferesComponent', () => {
+  it('crea choferes y calcula activos', async () => {
+    await TestBed.configureTestingModule({ imports: [ChoferesComponent], providers: [{ provide: ChoferesService, useValue: choferesService([chofer()]) }, { provide: EmpresaService, useValue: empresaService() }] }).compileComponents();
+    const fixture = TestBed.createComponent(ChoferesComponent);
+    fixture.detectChanges();
+    expect((fixture.componentInstance as any).activos()).toBe('1');
+  });
+
+  it('muestra advertencia al crear chofer sin empresa', async () => {
+    await TestBed.configureTestingModule({ imports: [ChoferesComponent], providers: [{ provide: ChoferesService, useValue: choferesService([]) }, { provide: EmpresaService, useValue: empresaService(null) }] }).compileComponents();
+    const component = TestBed.createComponent(ChoferesComponent).componentInstance as any;
+    component.ngOnInit();
+    component.newChofer();
+    expect(component.feedback()?.tone).toBe('warning');
+  });
+});
+
+describe('InventarioComponent', () => {
+  it('crea inventario y calcula items palletizables', async () => {
+    await TestBed.configureTestingModule({ imports: [InventarioComponent], providers: [{ provide: ProductosService, useValue: productosService([producto({ tipo: 'PRODUCTO', palletizable: true })]) }, { provide: EmpresaService, useValue: empresaService() }] }).compileComponents();
+    const fixture = TestBed.createComponent(InventarioComponent);
+    fixture.detectChanges();
+    expect((fixture.componentInstance as any).palletizables()).toBe('1');
+  });
+
+  it('muestra advertencia al crear item sin empresa', async () => {
+    await TestBed.configureTestingModule({ imports: [InventarioComponent], providers: [{ provide: ProductosService, useValue: productosService([]) }, { provide: EmpresaService, useValue: empresaService(null) }] }).compileComponents();
+    const component = TestBed.createComponent(InventarioComponent).componentInstance as any;
+    component.ngOnInit();
+    component.newItem();
     expect(component.feedback()?.tone).toBe('warning');
   });
 });
@@ -503,6 +541,22 @@ describe('FacturaFormComponent', () => {
   });
 });
 
+describe('GuiaRemisionFormComponent', () => {
+  it('crea guia de remision con un detalle inicial', async () => {
+    await TestBed.configureTestingModule({ imports: [GuiaRemisionFormComponent], providers: facturaProviders() }).compileComponents();
+    const component = TestBed.createComponent(GuiaRemisionFormComponent).componentInstance as any;
+    expect(component.totalItems()).toBe(1);
+    expect(component.totalCantidad()).toBe(1);
+  });
+
+  it('no elimina la ultima linea de traslado', async () => {
+    await TestBed.configureTestingModule({ imports: [GuiaRemisionFormComponent], providers: facturaProviders() }).compileComponents();
+    const component = TestBed.createComponent(GuiaRemisionFormComponent).componentInstance as any;
+    component.removeItem(0);
+    expect(component.detalles.length).toBe(1);
+  });
+});
+
 function authService() {
   return {
     user: jest.fn(() => user()),
@@ -555,6 +609,10 @@ function clientesService(clientes: Cliente[]) {
   return { list: jest.fn(() => of(clientes)), save: jest.fn(() => of(clientes[0] ?? cliente())), delete: jest.fn(() => of(void 0)) };
 }
 
+function choferesService(choferes: Chofer[]) {
+  return { list: jest.fn(() => of(choferes)), save: jest.fn(() => of(choferes[0] ?? chofer())), delete: jest.fn(() => of(void 0)) };
+}
+
 function productosService(productos: Producto[]) {
   return { list: jest.fn(() => of(productos)), save: jest.fn(() => of(productos[0] ?? producto())), delete: jest.fn(() => of(void 0)) };
 }
@@ -596,7 +654,8 @@ function comprobantesService(comprobantes: Comprobante[]) {
     list: jest.fn(() => of(comprobantes)),
     getById: jest.fn(() => of(comprobantes[0] ?? comprobante())),
     createDraft: jest.fn(() => of(comprobantes[0] ?? comprobante())),
-    emitirFactura: jest.fn(() => of(comprobantes[0] ?? comprobante()))
+    emitirFactura: jest.fn(() => of(comprobantes[0] ?? comprobante())),
+    emitirGuiaRemision: jest.fn(() => of(comprobantes[0] ?? comprobante({ tipo: 'GUIA_REMISION', total: 0 })))
   };
 }
 
@@ -605,6 +664,7 @@ function facturaProviders() {
     provideRouter([]),
     { provide: EmpresaService, useValue: empresaService(empresa(), [establecimiento()]) },
     { provide: ClientesService, useValue: clientesService([cliente()]) },
+    { provide: ChoferesService, useValue: choferesService([chofer()]) },
     { provide: ProductosService, useValue: productosService([producto()]) },
     { provide: ComprobantesService, useValue: comprobantesService([comprobante()]) }
   ];
@@ -681,6 +741,32 @@ function producto(overrides: Partial<Producto> = {}): Producto {
     precioUnitario: 10,
     tarifaIva: '15%',
     stock: 0,
+    unidadMedida: 'UNIDAD',
+    stockMinimo: 0,
+    pesoPromedioKg: 0,
+    palletizable: false,
+    unidadesPorPallet: 0,
+    requiereRefrigeracion: false,
+    estado: 'ACTIVO',
+    ...overrides
+  };
+}
+
+function chofer(overrides: Partial<Chofer> = {}): Chofer {
+  return {
+    id: 'chofer-1',
+    tipoIdentificacion: 'CEDULA',
+    identificacion: '0912345678',
+    nombres: 'Carlos',
+    apellidos: 'Mora',
+    licencia: 'LIC-123',
+    telefono: '0999999999',
+    correo: 'chofer@test.local',
+    placaVehiculo: 'ABC1234',
+    tipoVehiculo: 'Camion',
+    capacidad: 1200,
+    unidadCapacidad: 'KILOGRAMO',
+    transportaRefrigerado: true,
     estado: 'ACTIVO',
     ...overrides
   };
