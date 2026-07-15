@@ -2,6 +2,7 @@ package com.factuec.interfaces.rest.controller;
 
 import com.factuec.application.dto.comprobante.ComprobanteResponse;
 import com.factuec.application.dto.comprobante.FacturaRequest;
+import com.factuec.application.dto.comprobante.GuiaRemisionRequest;
 import com.factuec.application.usecase.ComprobanteUseCase;
 import com.factuec.shared.response.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -54,6 +55,12 @@ public class ComprobanteController {
     @PreAuthorize("hasAnyRole('ADMIN','EMISOR','CONTABILIDAD')")
     ApiResponse<ComprobanteResponse> emitir(@Valid @RequestBody FacturaRequest request) {
         return ApiResponse.ok("Factura emitida", comprobanteUseCase.emitirFactura(request));
+    }
+
+    @PostMapping("/guias-remision/emitir")
+    @PreAuthorize("hasAnyRole('ADMIN','EMISOR','CONTABILIDAD')")
+    ApiResponse<ComprobanteResponse> emitirGuiaRemision(@Valid @RequestBody GuiaRemisionRequest request) {
+        return ApiResponse.ok("Guia de remision emitida", comprobanteUseCase.emitirGuiaRemision(request));
     }
 
     @PostMapping("/{id}/reenviar-sri")

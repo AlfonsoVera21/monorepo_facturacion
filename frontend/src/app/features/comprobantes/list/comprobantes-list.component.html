@@ -9,6 +9,13 @@
   actionLink="/comprobantes/nuevo/factura"
 />
 
+<div class="quick-actions">
+  <a class="btn btn--secondary" routerLink="/comprobantes/nuevo/guia-remision">
+    <span class="material-symbols-outlined">local_shipping</span>
+    Nueva Guia
+  </a>
+</div>
+
 <form class="card filters comprobantes-filters" [formGroup]="filtersForm">
   <div class="field">
     <label for="fechaDesde">Rango de fechas</label>

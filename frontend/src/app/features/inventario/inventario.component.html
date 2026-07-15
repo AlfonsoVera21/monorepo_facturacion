@@ -1,7 +1,7 @@
 <app-page-header
-  title="Productos y Servicios"
-  subtitle="Administra el catalogo de items para facturacion electronica."
-  icon="inventory_2"
+  title="Inventario"
+  subtitle="Controla frutas, unidades de medida, stock y condiciones de transporte."
+  icon="warehouse"
 />
 
 @if (feedback(); as message) {
@@ -9,30 +9,34 @@
 }
 
 <section class="stats-grid">
-  <app-metric-card title="Total Items" [value]="totalItems()" icon="inventory_2" tone="primary" />
-  <app-metric-card title="Servicios" [value]="servicios()" icon="category" tone="neutral" />
-  <app-metric-card title="Activos" [value]="productosActivos()" icon="verified" tone="success" />
-  <app-metric-card title="Stock Total" [value]="stockTotal()" icon="inventory" tone="warning" />
+  <app-metric-card title="Stock Total" [value]="stockTotal()" icon="inventory" tone="primary" />
   <app-metric-card title="Stock Critico" [value]="stockCritico()" icon="production_quantity_limits" tone="danger" />
+  <app-metric-card title="Palletizables" [value]="palletizables()" icon="pallet" tone="warning" />
+  <app-metric-card title="Requieren Frio" [value]="refrigerados()" icon="ac_unit" tone="neutral" />
 </section>
 
-<section class="catalog-tabs">
-  <button class="chip is-active" type="button">Todos</button>
-  <button class="chip" type="button">Productos</button>
-  <button class="chip" type="button">Servicios</button>
+<section class="card inventory-toolbar">
+  <div>
+    <span class="material-symbols-outlined">scale</span>
+    <strong>UNIDADES:</strong>
+  </div>
+  <button class="chip is-active" type="button">Kg</button>
+  <button class="chip" type="button">Quintales</button>
+  <button class="chip" type="button">Pallets</button>
+  <button class="chip" type="button">Cajas</button>
   <span class="toolbar-spacer"></span>
-  <button class="btn btn--primary" type="button" (click)="newProducto()">
+  <button class="btn btn--primary" type="button" (click)="newItem()">
     <span class="material-symbols-outlined">add</span>
-    Nuevo Producto
+    Nuevo Item
   </button>
 </section>
 
 @if (showForm()) {
-  <section class="card product-form" [formGroup]="productoForm">
+  <section class="card inventory-form" [formGroup]="inventarioForm">
     <div class="section-title">
       <div>
-        <h2>{{ editingId() ? 'Editar Item' : 'Nuevo Item' }}</h2>
-        <p>Producto o servicio disponible para facturar.</p>
+        <h2>{{ editingId() ? 'Editar Inventario' : 'Nuevo Item de Inventario' }}</h2>
+        <p>Datos de fruta, empaque, pallets y conservacion.</p>
       </div>
     </div>
     <div class="form-grid">
@@ -41,33 +45,16 @@
         <input id="codigoPrincipal" formControlName="codigoPrincipal" />
       </div>
       <div class="field">
-        <label for="tipo">Tipo</label>
-        <select id="tipo" formControlName="tipo">
-          <option value="SERVICIO">Servicio</option>
-          <option value="PRODUCTO">Producto</option>
-        </select>
+        <label for="categoria">Categoria</label>
+        <input id="categoria" formControlName="categoria" />
       </div>
       <div class="field field--span-2">
-        <label for="nombre">Nombre</label>
+        <label for="nombre">Producto</label>
         <input id="nombre" formControlName="nombre" />
       </div>
       <div class="field field--span-2">
         <label for="descripcion">Descripcion</label>
         <input id="descripcion" formControlName="descripcion" />
-      </div>
-      <div class="field">
-        <label for="precioUnitario">Precio Unitario</label>
-        <input id="precioUnitario" type="number" min="0" step="0.01" formControlName="precioUnitario" />
-      </div>
-      <div class="field">
-        <label for="tarifaIva">IVA</label>
-        <select id="tarifaIva" formControlName="tarifaIva">
-          <option value="IVA_15">15%</option>
-          <option value="IVA_12">12%</option>
-          <option value="IVA_0">0%</option>
-          <option value="NO_OBJETO_IVA">No objeto</option>
-          <option value="EXENTO_IVA">Exento</option>
-        </select>
       </div>
       <div class="field">
         <label for="stock">Stock</label>
@@ -94,23 +81,33 @@
         <input id="unidadesPorPallet" type="number" min="0" step="0.01" formControlName="unidadesPorPallet" />
       </div>
       <div class="field">
-        <label for="categoria">Categoria</label>
-        <input id="categoria" formControlName="categoria" />
+        <label for="precioUnitario">Precio Unitario</label>
+        <input id="precioUnitario" type="number" min="0" step="0.01" formControlName="precioUnitario" />
+      </div>
+      <div class="field">
+        <label for="tarifaIva">IVA</label>
+        <select id="tarifaIva" formControlName="tarifaIva">
+          <option value="IVA_0">0%</option>
+          <option value="IVA_15">15%</option>
+          <option value="IVA_12">12%</option>
+          <option value="NO_OBJETO_IVA">No objeto</option>
+          <option value="EXENTO_IVA">Exento</option>
+        </select>
       </div>
       <label class="check-field">
         <input type="checkbox" formControlName="palletizable" />
-        <span>Palletizable</span>
+        <span>Transporte en pallets</span>
       </label>
       <label class="check-field">
         <input type="checkbox" formControlName="requiereRefrigeracion" />
-        <span>Requiere frio</span>
+        <span>Requiere refrigeracion</span>
       </label>
     </div>
     <footer class="form-actions">
       <button class="btn btn--secondary" type="button" (click)="cancelForm()">Cancelar</button>
-      <button class="btn btn--primary" type="button" (click)="saveProducto()" [disabled]="saving()">
+      <button class="btn btn--primary" type="button" (click)="saveItem()" [disabled]="saving()">
         <span class="material-symbols-outlined">save</span>
-        {{ saving() ? 'Guardando...' : 'Guardar Item' }}
+        {{ saving() ? 'Guardando...' : 'Guardar Inventario' }}
       </button>
     </footer>
   </section>
@@ -122,47 +119,51 @@
       <thead>
         <tr>
           <th>Codigo</th>
-          <th>Nombre del Item</th>
-          <th>Tipo</th>
-          <th>Precio Unit.</th>
+          <th>Producto</th>
           <th>Stock</th>
-          <th>Unidad</th>
           <th>Minimo</th>
-          <th>Carga</th>
-          <th>IVA</th>
-          <th>Estado</th>
+          <th>Pallet</th>
+          <th>Conservacion</th>
+          <th>Estado Stock</th>
+          <th>Activo</th>
           <th>Acciones</th>
         </tr>
       </thead>
       <tbody>
-        @for (producto of productos(); track producto.id) {
+        @for (producto of inventario(); track producto.id) {
           <tr>
             <td class="mono">{{ producto.codigo }}</td>
             <td>
               <strong>{{ producto.nombre }}</strong>
               <small>{{ producto.categoria }}</small>
             </td>
-            <td>{{ producto.tipo }}</td>
-            <td class="mono">${{ producto.precioUnitario.toFixed(2) }}</td>
-            <td class="mono stock-cell">{{ formatStock(producto.stock) }}</td>
-            <td>{{ formatUnidad(producto.unidadMedida) }}</td>
-            <td class="mono">{{ formatStock(producto.stockMinimo) }}</td>
+            <td class="mono">{{ formatQuantity(producto.stock) }} {{ formatUnidad(producto.unidadMedida) }}</td>
+            <td class="mono">{{ formatQuantity(producto.stockMinimo) }}</td>
             <td>
               @if (producto.palletizable) {
-                <span class="load-tag">Pallet</span>
-              }
-              @if (producto.requiereRefrigeracion) {
-                <span class="load-tag load-tag--cold">Frio</span>
+                <span class="inventory-tag">Pallet</span>
+                <small>{{ formatQuantity(producto.unidadesPorPallet) }} por pallet</small>
+              } @else {
+                <span class="inventory-tag inventory-tag--muted">No pallet</span>
               }
             </td>
-            <td>{{ producto.tarifaIva }}</td>
+            <td>
+              @if (producto.requiereRefrigeracion) {
+                <span class="inventory-tag inventory-tag--cold">Frio</span>
+              } @else {
+                <span class="inventory-tag inventory-tag--muted">Ambiente</span>
+              }
+            </td>
+            <td>
+              <span class="stock-pill" [class.stock-pill--critical]="stockStatus(producto) === 'Critico'">{{ stockStatus(producto) }}</span>
+            </td>
             <td><app-status-badge [status]="producto.estado" /></td>
             <td>
               <span class="actions">
-                <button class="icon-button" type="button" aria-label="Editar" (click)="editProducto(producto)">
+                <button class="icon-button" type="button" aria-label="Editar" (click)="editItem(producto)">
                   <span class="material-symbols-outlined">edit</span>
                 </button>
-                <button class="icon-button" type="button" aria-label="Inactivar" (click)="deleteProducto(producto)">
+                <button class="icon-button" type="button" aria-label="Inactivar" (click)="deleteItem(producto)">
                   <span class="material-symbols-outlined">delete</span>
                 </button>
               </span>
@@ -170,8 +171,8 @@
           </tr>
         } @empty {
           <tr>
-            <td colspan="11">
-              <p class="empty-state">No hay productos o servicios. Crea uno para poder emitir facturas.</p>
+            <td colspan="9">
+              <p class="empty-state">No hay inventario registrado. Crea frutas, cajas, pallets o unidades de carga.</p>
             </td>
           </tr>
         }
@@ -179,12 +180,3 @@
     </table>
   </div>
 </section>
-
-<aside class="card import-card">
-  <span class="material-symbols-outlined">upload_file</span>
-  <div>
-    <h2>Importacion Masiva de Productos</h2>
-    <p>Ahorra tiempo importando productos y servicios desde una plantilla estandarizada.</p>
-  </div>
-  <button class="btn btn--primary" type="button" (click)="newProducto()">Crear Manual</button>
-</aside>

@@ -2,6 +2,7 @@ package com.factuec.domain.enums;
 
 public enum AuditAction {
     CREACION_FACTURA,
+    CREACION_GUIA_REMISION,
     FIRMA,
     ENVIO_SRI,
     AUTORIZACION,

@@ -55,6 +55,18 @@ export class ComprobanteDetailComponent implements OnInit {
     this.comprobantesService.downloadXml(item.id).subscribe((xml) => this.downloadBlob(xml, `${item.numero}.xml`));
   }
 
+  protected documentLabel(item: Comprobante): string {
+    const labels: Record<Comprobante['tipo'], string> = {
+      FACTURA: 'Factura',
+      NOTA_CREDITO: 'Nota de Credito',
+      NOTA_DEBITO: 'Nota de Debito',
+      GUIA_REMISION: 'Guia de Remision',
+      RETENCION: 'Retencion',
+      LIQUIDACION_COMPRA: 'Liquidacion de Compra'
+    };
+    return labels[item.tipo];
+  }
+
   private iconForStatus(status: Comprobante['estado']): string {
     if (status === 'AUTORIZADO') {
       return 'done_all';

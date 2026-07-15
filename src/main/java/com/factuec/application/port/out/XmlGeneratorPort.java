@@ -4,4 +4,6 @@ import com.factuec.infrastructure.persistence.entity.ComprobanteEntity;
 
 public interface XmlGeneratorPort {
     String generateFactura(ComprobanteEntity comprobante);
+
+    String generateGuiaRemision(ComprobanteEntity comprobante);
 }

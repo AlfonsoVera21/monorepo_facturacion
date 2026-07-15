@@ -11,11 +11,25 @@ export type EstadoComprobante =
   | 'ANULADO'
   | 'ERROR';
 
-export type TipoComprobante = 'FACTURA' | 'NOTA_CREDITO' | 'RETENCION';
+export type TipoComprobante = 'FACTURA' | 'NOTA_CREDITO' | 'NOTA_DEBITO' | 'GUIA_REMISION' | 'RETENCION' | 'LIQUIDACION_COMPRA';
 
 export type TipoIdentificacion = 'RUC' | 'CEDULA' | 'PASAPORTE' | 'CONSUMIDOR_FINAL';
 
 export type TipoProducto = 'PRODUCTO' | 'SERVICIO';
+
+export type UnidadMedidaInventario =
+  | 'KILOGRAMO'
+  | 'GRAMO'
+  | 'LIBRA'
+  | 'QUINTAL'
+  | 'TONELADA'
+  | 'CAJA'
+  | 'SACO'
+  | 'BULTO'
+  | 'PALLET'
+  | 'GAVETA'
+  | 'CANASTILLA'
+  | 'UNIDAD';
 
 export type EntityId = string | number;
 
@@ -86,6 +100,29 @@ export interface Producto {
   precioUnitario: number;
   tarifaIva: '15%' | '12%' | '0%' | 'EXENTO' | 'NO_OBJETO';
   stock?: number;
+  unidadMedida: UnidadMedidaInventario;
+  stockMinimo: number;
+  pesoPromedioKg?: number;
+  palletizable: boolean;
+  unidadesPorPallet?: number;
+  requiereRefrigeracion: boolean;
+  estado: 'ACTIVO' | 'INACTIVO';
+}
+
+export interface Chofer {
+  id: EntityId;
+  tipoIdentificacion: TipoIdentificacion;
+  identificacion: string;
+  nombres: string;
+  apellidos: string;
+  licencia: string;
+  telefono: string;
+  correo: string;
+  placaVehiculo: string;
+  tipoVehiculo: string;
+  capacidad?: number;
+  unidadCapacidad?: UnidadMedidaInventario;
+  transportaRefrigerado: boolean;
   estado: 'ACTIVO' | 'INACTIVO';
 }
 
@@ -133,6 +170,23 @@ export interface Comprobante {
   numeroAutorizacion?: string;
   fechaAutorizacion?: string;
   ambiente: AmbienteSri;
+  guiaDirPartida?: string;
+  guiaRazonSocialTransportista?: string;
+  guiaTipoIdentificacionTransportista?: TipoIdentificacion;
+  guiaIdentificacionTransportista?: string;
+  guiaRise?: string;
+  guiaFechaIniTransporte?: string;
+  guiaFechaFinTransporte?: string;
+  guiaPlaca?: string;
+  guiaDestinatarioDireccion?: string;
+  guiaMotivoTraslado?: string;
+  guiaDocAduaneroUnico?: string;
+  guiaCodEstabDestino?: string;
+  guiaRuta?: string;
+  guiaCodDocSustento?: string;
+  guiaNumDocSustento?: string;
+  guiaNumAutDocSustento?: string;
+  guiaFechaEmisionDocSustento?: string;
   detalles: ComprobanteDetalle[];
   pagos: ComprobantePago[];
   mensajesSri: SriMensaje[];

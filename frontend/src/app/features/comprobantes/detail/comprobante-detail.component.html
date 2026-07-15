@@ -6,7 +6,7 @@
       <span class="material-symbols-outlined">arrow_back</span>
     </a>
     <div>
-      <h1>Factura {{ item.numero }}</h1>
+      <h1>{{ documentLabel(item) }} {{ item.numero }}</h1>
       <p>Creada el {{ item.fechaEmision }}, 14:30</p>
     </div>
     <app-status-badge [status]="item.estado" />
@@ -54,12 +54,35 @@
             <span>RUC: 1790000000001</span>
           </div>
           <div>
-            <small>Receptor</small>
+            <small>{{ item.tipo === 'GUIA_REMISION' ? 'Destinatario' : 'Receptor' }}</small>
             <strong>{{ item.cliente.razonSocial }}</strong>
             <span>RUC/CI: {{ item.identificacion }} | {{ item.cliente.email }}</span>
           </div>
         </div>
       </article>
+
+      @if (item.tipo === 'GUIA_REMISION') {
+        <article class="card">
+          <div class="section-title">
+            <div>
+              <h2>Datos de Traslado</h2>
+              <p>Transportista, ruta y vigencia</p>
+            </div>
+            <span class="material-symbols-outlined">local_shipping</span>
+          </div>
+          <dl class="detail-list guide-detail-list">
+            <div><dt>Transportista</dt><dd>{{ item.guiaRazonSocialTransportista || 'Sin registrar' }}</dd></div>
+            <div><dt>Identificacion</dt><dd class="mono">{{ item.guiaIdentificacionTransportista || 'Sin registrar' }}</dd></div>
+            <div><dt>Placa</dt><dd class="mono">{{ item.guiaPlaca || 'Sin registrar' }}</dd></div>
+            <div><dt>Partida</dt><dd>{{ item.guiaDirPartida || 'Sin registrar' }}</dd></div>
+            <div><dt>Destino</dt><dd>{{ item.guiaDestinatarioDireccion || item.cliente.direccion || 'Sin registrar' }}</dd></div>
+            <div><dt>Motivo</dt><dd>{{ item.guiaMotivoTraslado || 'Sin registrar' }}</dd></div>
+            <div><dt>Ruta</dt><dd>{{ item.guiaRuta || 'Sin registrar' }}</dd></div>
+            <div><dt>Transporte</dt><dd>{{ item.guiaFechaIniTransporte || 'NA' }} a {{ item.guiaFechaFinTransporte || 'NA' }}</dd></div>
+            <div><dt>Doc. Sustento</dt><dd class="mono">{{ item.guiaNumDocSustento || 'Sin registrar' }}</dd></div>
+          </dl>
+        </article>
+      }
 
       <article class="table-shell">
         <div class="table-shell__header">
@@ -75,8 +98,10 @@
                 <th>Codigo</th>
                 <th>Descripcion</th>
                 <th>Cant.</th>
-                <th>P. Unit</th>
-                <th>Total</th>
+                @if (item.tipo !== 'GUIA_REMISION') {
+                  <th>P. Unit</th>
+                  <th>Total</th>
+                }
               </tr>
             </thead>
             <tbody>
@@ -85,18 +110,22 @@
                   <td class="mono">{{ detalle.codigo }}</td>
                   <td>{{ detalle.descripcion }}</td>
                   <td>{{ detalle.cantidad.toFixed(2) }}</td>
-                  <td class="mono">${{ detalle.precioUnitario.toFixed(2) }}</td>
-                  <td class="mono">${{ detalle.subtotal.toFixed(2) }}</td>
+                  @if (item.tipo !== 'GUIA_REMISION') {
+                    <td class="mono">${{ detalle.precioUnitario.toFixed(2) }}</td>
+                    <td class="mono">${{ detalle.subtotal.toFixed(2) }}</td>
+                  }
                 </tr>
               }
             </tbody>
           </table>
         </div>
-        <div class="detail-totals">
-          <div class="total-row"><span>Subtotal:</span><strong>${{ item.subtotal.toFixed(2) }}</strong></div>
-          <div class="total-row"><span>IVA:</span><strong>${{ item.iva.toFixed(2) }}</strong></div>
-          <div class="total-row total-row--grand"><span>Total:</span><strong>${{ item.total.toFixed(2) }}</strong></div>
-        </div>
+        @if (item.tipo !== 'GUIA_REMISION') {
+          <div class="detail-totals">
+            <div class="total-row"><span>Subtotal:</span><strong>${{ item.subtotal.toFixed(2) }}</strong></div>
+            <div class="total-row"><span>IVA:</span><strong>${{ item.iva.toFixed(2) }}</strong></div>
+            <div class="total-row total-row--grand"><span>Total:</span><strong>${{ item.total.toFixed(2) }}</strong></div>
+          </div>
+        }
       </article>
     </div>
 

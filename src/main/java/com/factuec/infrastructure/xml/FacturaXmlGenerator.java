@@ -38,14 +38,29 @@ public class FacturaXmlGenerator implements XmlGeneratorPort {
             appendInfoFactura(document, factura, comprobante);
             appendDetalles(document, factura, comprobante);
 
-            StringWriter writer = new StringWriter();
-            var transformer = TransformerFactory.newInstance().newTransformer();
-            transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
-            transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-            transformer.transform(new DOMSource(document), new StreamResult(writer));
-            return writer.toString();
+            return render(document);
         } catch (Exception exception) {
             throw new BusinessException("No se pudo generar XML de factura: " + exception.getMessage());
+        }
+    }
+
+    @Override
+    public String generateGuiaRemision(ComprobanteEntity comprobante) {
+        validateGuiaRemision(comprobante);
+        try {
+            Document document = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
+            Element guia = document.createElement("guiaRemision");
+            guia.setAttribute("id", "comprobante");
+            guia.setAttribute("version", "1.1.0");
+            document.appendChild(guia);
+
+            appendInfoTributaria(document, guia, comprobante);
+            appendInfoGuiaRemision(document, guia, comprobante);
+            appendDestinatarios(document, guia, comprobante);
+
+            return render(document);
+        } catch (Exception exception) {
+            throw new BusinessException("No se pudo generar XML de guia de remision: " + exception.getMessage());
         }
     }
 
@@ -131,6 +146,48 @@ public class FacturaXmlGenerator implements XmlGeneratorPort {
         }
     }
 
+    private void appendInfoGuiaRemision(Document document, Element guia, ComprobanteEntity comprobante) {
+        Element infoGuia = append(document, guia, "infoGuiaRemision", null);
+        append(document, infoGuia, "dirEstablecimiento", comprobante.getEstablecimiento().getDireccion());
+        append(document, infoGuia, "dirPartida", comprobante.getGuiaDirPartida());
+        append(document, infoGuia, "razonSocialTransportista", comprobante.getGuiaRazonSocialTransportista());
+        append(document, infoGuia, "tipoIdentificacionTransportista", comprobante.getGuiaTipoIdentificacionTransportista().sriCode());
+        append(document, infoGuia, "rucTransportista", comprobante.getGuiaIdentificacionTransportista());
+        appendIfPresent(document, infoGuia, "rise", comprobante.getGuiaRise());
+        append(document, infoGuia, "obligadoContabilidad", comprobante.getEmpresa().isObligadoContabilidad() ? "SI" : "NO");
+        appendIfPresent(document, infoGuia, "contribuyenteEspecial", comprobante.getEmpresa().getContribuyenteEspecial());
+        append(document, infoGuia, "fechaIniTransporte", SRI_DATE.format(comprobante.getGuiaFechaIniTransporte()));
+        append(document, infoGuia, "fechaFinTransporte", SRI_DATE.format(comprobante.getGuiaFechaFinTransporte()));
+        append(document, infoGuia, "placa", comprobante.getGuiaPlaca());
+    }
+
+    private void appendDestinatarios(Document document, Element guia, ComprobanteEntity comprobante) {
+        Element destinatarios = append(document, guia, "destinatarios", null);
+        Element destinatario = append(document, destinatarios, "destinatario", null);
+        append(document, destinatario, "identificacionDestinatario", comprobante.getCliente().getIdentificacion());
+        append(document, destinatario, "razonSocialDestinatario", comprobante.getCliente().getRazonSocial());
+        append(document, destinatario, "dirDestinatario", defaultText(comprobante.getGuiaDestinatarioDireccion(), comprobante.getCliente().getDireccion()));
+        append(document, destinatario, "motivoTraslado", comprobante.getGuiaMotivoTraslado());
+        appendIfPresent(document, destinatario, "docAduaneroUnico", comprobante.getGuiaDocAduaneroUnico());
+        appendIfPresent(document, destinatario, "codEstabDestino", comprobante.getGuiaCodEstabDestino());
+        appendIfPresent(document, destinatario, "ruta", comprobante.getGuiaRuta());
+        appendIfPresent(document, destinatario, "codDocSustento", comprobante.getGuiaCodDocSustento());
+        appendIfPresent(document, destinatario, "numDocSustento", comprobante.getGuiaNumDocSustento());
+        appendIfPresent(document, destinatario, "numAutDocSustento", comprobante.getGuiaNumAutDocSustento());
+        if (comprobante.getGuiaFechaEmisionDocSustento() != null) {
+            append(document, destinatario, "fechaEmisionDocSustento", SRI_DATE.format(comprobante.getGuiaFechaEmisionDocSustento()));
+        }
+
+        Element detalles = append(document, destinatario, "detalles", null);
+        for (ComprobanteDetalleEntity item : comprobante.getDetalles()) {
+            Element detalle = append(document, detalles, "detalle", null);
+            append(document, detalle, "codigoInterno", item.getCodigoPrincipal());
+            appendIfPresent(document, detalle, "codigoAdicional", item.getCodigoAuxiliar());
+            append(document, detalle, "descripcion", item.getDescripcion());
+            append(document, detalle, "cantidad", quantity6(item.getCantidad()));
+        }
+    }
+
     private Element append(Document document, Element parent, String name, String value) {
         Element element = document.createElement(name);
         if (value != null) {
@@ -138,6 +195,21 @@ public class FacturaXmlGenerator implements XmlGeneratorPort {
         }
         parent.appendChild(element);
         return element;
+    }
+
+    private void appendIfPresent(Document document, Element parent, String name, String value) {
+        if (value != null && !value.isBlank()) {
+            append(document, parent, name, value);
+        }
+    }
+
+    private String render(Document document) throws Exception {
+        StringWriter writer = new StringWriter();
+        var transformer = TransformerFactory.newInstance().newTransformer();
+        transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
+        transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+        transformer.transform(new DOMSource(document), new StreamResult(writer));
+        return writer.toString();
     }
 
     private void validate(ComprobanteEntity comprobante) {
@@ -150,6 +222,33 @@ public class FacturaXmlGenerator implements XmlGeneratorPort {
         }
     }
 
+    private void validateGuiaRemision(ComprobanteEntity comprobante) {
+        if (comprobante == null || comprobante.getEmpresa() == null || comprobante.getCliente() == null
+                || comprobante.getEstablecimiento() == null || comprobante.getPuntoEmision() == null
+                || comprobante.getDetalles() == null || comprobante.getDetalles().isEmpty()) {
+            throw new BusinessException("Guia de remision incompleta para generar XML");
+        }
+        if (comprobante.getClaveAcceso() == null || comprobante.getClaveAcceso().length() != 49) {
+            throw new BusinessException("Clave de acceso invalida para generar XML");
+        }
+        if (isBlank(comprobante.getGuiaDirPartida())
+                || isBlank(comprobante.getGuiaRazonSocialTransportista())
+                || comprobante.getGuiaTipoIdentificacionTransportista() == null
+                || isBlank(comprobante.getGuiaIdentificacionTransportista())
+                || comprobante.getGuiaFechaIniTransporte() == null
+                || comprobante.getGuiaFechaFinTransporte() == null
+                || isBlank(comprobante.getGuiaPlaca())
+                || isBlank(comprobante.getGuiaMotivoTraslado())) {
+            throw new BusinessException("Guia de remision incompleta para generar XML");
+        }
+        if (comprobante.getFechaEmision() != null && comprobante.getGuiaFechaIniTransporte().isBefore(comprobante.getFechaEmision())) {
+            throw new BusinessException("La fecha de inicio de transporte no puede ser menor a la fecha de emision");
+        }
+        if (comprobante.getGuiaFechaFinTransporte().isBefore(comprobante.getGuiaFechaIniTransporte())) {
+            throw new BusinessException("La fecha fin de transporte no puede ser menor a la fecha de inicio");
+        }
+    }
+
     private String money(BigDecimal value) {
         return value.setScale(2, RoundingMode.HALF_UP).toPlainString();
     }
@@ -158,7 +257,21 @@ public class FacturaXmlGenerator implements XmlGeneratorPort {
         return value.setScale(4, RoundingMode.HALF_UP).toPlainString();
     }
 
+    private String quantity6(BigDecimal value) {
+        return value.setScale(6, RoundingMode.HALF_UP).toPlainString();
+    }
+
     private String defaultText(String value, String fallback) {
-        return value == null || value.isBlank() ? fallback : value;
+        if (value != null && !value.isBlank()) {
+            return value;
+        }
+        if (fallback != null && !fallback.isBlank()) {
+            return fallback;
+        }
+        return "NA";
+    }
+
+    private boolean isBlank(String value) {
+        return value == null || value.isBlank();
     }
 }

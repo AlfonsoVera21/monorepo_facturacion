@@ -5,6 +5,7 @@ import com.factuec.domain.enums.EstadoComprobante;
 import com.factuec.domain.enums.EstadoSri;
 import com.factuec.domain.enums.FormaPago;
 import com.factuec.domain.enums.TipoComprobante;
+import com.factuec.domain.enums.TipoIdentificacion;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -36,6 +37,23 @@ public record ComprobanteResponse(
         Instant fechaAutorizacion,
         String mensajesSri,
         List<SriMensajeResponse> mensajes,
-        List<FacturaDetalleResponse> detalles
+        List<FacturaDetalleResponse> detalles,
+        String guiaDirPartida,
+        String guiaRazonSocialTransportista,
+        TipoIdentificacion guiaTipoIdentificacionTransportista,
+        String guiaIdentificacionTransportista,
+        String guiaRise,
+        LocalDate guiaFechaIniTransporte,
+        LocalDate guiaFechaFinTransporte,
+        String guiaPlaca,
+        String guiaDestinatarioDireccion,
+        String guiaMotivoTraslado,
+        String guiaDocAduaneroUnico,
+        String guiaCodEstabDestino,
+        String guiaRuta,
+        String guiaCodDocSustento,
+        String guiaNumDocSustento,
+        String guiaNumAutDocSustento,
+        LocalDate guiaFechaEmisionDocSustento
 ) {
 }

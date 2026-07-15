@@ -6,6 +6,7 @@ import com.factuec.domain.enums.EstadoSri;
 import com.factuec.domain.enums.FormaPago;
 import com.factuec.domain.enums.TipoComprobante;
 import com.factuec.domain.enums.TipoEmision;
+import com.factuec.domain.enums.TipoIdentificacion;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -128,6 +129,58 @@ public class ComprobanteEntity extends BaseEntity {
 
     @Column(name = "mensajes_sri", columnDefinition = "text")
     private String mensajesSri;
+
+    @Column(name = "guia_dir_partida", length = 300)
+    private String guiaDirPartida;
+
+    @Column(name = "guia_razon_social_transportista", length = 300)
+    private String guiaRazonSocialTransportista;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "guia_tipo_identificacion_transportista", length = 30)
+    private TipoIdentificacion guiaTipoIdentificacionTransportista;
+
+    @Column(name = "guia_identificacion_transportista", length = 20)
+    private String guiaIdentificacionTransportista;
+
+    @Column(name = "guia_rise", length = 40)
+    private String guiaRise;
+
+    @Column(name = "guia_fecha_ini_transporte")
+    private LocalDate guiaFechaIniTransporte;
+
+    @Column(name = "guia_fecha_fin_transporte")
+    private LocalDate guiaFechaFinTransporte;
+
+    @Column(name = "guia_placa", length = 20)
+    private String guiaPlaca;
+
+    @Column(name = "guia_destinatario_direccion", length = 300)
+    private String guiaDestinatarioDireccion;
+
+    @Column(name = "guia_motivo_traslado", length = 300)
+    private String guiaMotivoTraslado;
+
+    @Column(name = "guia_doc_aduanero_unico", length = 20)
+    private String guiaDocAduaneroUnico;
+
+    @Column(name = "guia_cod_estab_destino", length = 3)
+    private String guiaCodEstabDestino;
+
+    @Column(name = "guia_ruta", length = 300)
+    private String guiaRuta;
+
+    @Column(name = "guia_cod_doc_sustento", length = 2)
+    private String guiaCodDocSustento;
+
+    @Column(name = "guia_num_doc_sustento", length = 17)
+    private String guiaNumDocSustento;
+
+    @Column(name = "guia_num_aut_doc_sustento", length = 49)
+    private String guiaNumAutDocSustento;
+
+    @Column(name = "guia_fecha_emision_doc_sustento")
+    private LocalDate guiaFechaEmisionDocSustento;
 
     @OneToMany(mappedBy = "comprobante", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ComprobanteDetalleEntity> detalles = new ArrayList<>();

@@ -1,4 +1,4 @@
-import { AmbienteSri, EstadoComprobante, TipoIdentificacion, TipoProducto } from '../models/factuec.models';
+import { AmbienteSri, EstadoComprobante, TipoIdentificacion, TipoProducto, UnidadMedidaInventario } from '../models/factuec.models';
 
 export interface AuthResponseDto {
   userId: string;
@@ -91,7 +91,31 @@ export interface ProductoResponseDto {
   precioUnitario: number;
   tarifaIva: 'IVA_0' | 'IVA_5' | 'IVA_12' | 'IVA_15' | 'NO_OBJETO_IVA' | 'EXENTO_IVA';
   stock?: number;
+  unidadMedida?: UnidadMedidaInventario;
+  stockMinimo?: number;
+  pesoPromedioKg?: number;
+  palletizable?: boolean;
+  unidadesPorPallet?: number;
+  requiereRefrigeracion?: boolean;
   categoria?: string;
+  activo: boolean;
+}
+
+export interface ChoferResponseDto {
+  id: string;
+  empresaId: string;
+  tipoIdentificacion: TipoIdentificacion;
+  identificacion: string;
+  nombres: string;
+  apellidos?: string;
+  licencia: string;
+  telefono?: string;
+  correo?: string;
+  placaVehiculo?: string;
+  tipoVehiculo?: string;
+  capacidad?: number;
+  unidadCapacidad?: UnidadMedidaInventario;
+  transportaRefrigerado: boolean;
   activo: boolean;
 }
 
@@ -143,6 +167,23 @@ export interface ComprobanteResponseDto {
   mensajesSri?: string;
   mensajes?: SriMensajeResponseDto[];
   detalles: FacturaDetalleResponseDto[];
+  guiaDirPartida?: string;
+  guiaRazonSocialTransportista?: string;
+  guiaTipoIdentificacionTransportista?: TipoIdentificacion;
+  guiaIdentificacionTransportista?: string;
+  guiaRise?: string;
+  guiaFechaIniTransporte?: string;
+  guiaFechaFinTransporte?: string;
+  guiaPlaca?: string;
+  guiaDestinatarioDireccion?: string;
+  guiaMotivoTraslado?: string;
+  guiaDocAduaneroUnico?: string;
+  guiaCodEstabDestino?: string;
+  guiaRuta?: string;
+  guiaCodDocSustento?: string;
+  guiaNumDocSustento?: string;
+  guiaNumAutDocSustento?: string;
+  guiaFechaEmisionDocSustento?: string;
 }
 
 export interface FirmaElectronicaResponseDto {

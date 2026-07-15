@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
 
-import { EntityId, Producto, TipoProducto } from '../models/factuec.models';
+import { EntityId, Producto, TipoProducto, UnidadMedidaInventario } from '../models/factuec.models';
 import { ApiService } from './api.service';
 import { ProductoResponseDto } from './backend-api.models';
 import { mapProducto } from './backend-mappers';
@@ -19,6 +19,12 @@ export interface ProductoPayload {
   tarifaIva: TarifaIvaBackend;
   icePorcentaje?: number;
   stock?: number;
+  unidadMedida?: UnidadMedidaInventario;
+  stockMinimo?: number;
+  pesoPromedioKg?: number;
+  palletizable: boolean;
+  unidadesPorPallet?: number;
+  requiereRefrigeracion: boolean;
   categoria?: string;
   activo: boolean;
 }

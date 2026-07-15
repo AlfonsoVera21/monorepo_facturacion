@@ -1,0 +1,18 @@
+alter table comprobantes
+    add column guia_dir_partida varchar(300),
+    add column guia_razon_social_transportista varchar(300),
+    add column guia_tipo_identificacion_transportista varchar(30),
+    add column guia_identificacion_transportista varchar(20),
+    add column guia_rise varchar(40),
+    add column guia_fecha_ini_transporte date,
+    add column guia_fecha_fin_transporte date,
+    add column guia_placa varchar(20),
+    add column guia_destinatario_direccion varchar(300),
+    add column guia_motivo_traslado varchar(300),
+    add column guia_doc_aduanero_unico varchar(20),
+    add column guia_cod_estab_destino varchar(3),
+    add column guia_ruta varchar(300),
+    add column guia_cod_doc_sustento varchar(2),
+    add column guia_num_doc_sustento varchar(17),
+    add column guia_num_aut_doc_sustento varchar(49),
+    add column guia_fecha_emision_doc_sustento date;

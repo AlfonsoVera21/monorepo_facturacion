@@ -37,6 +37,11 @@ export const routes: Routes = [
         title: 'FactuEC - Nueva Factura'
       },
       {
+        path: 'comprobantes/nuevo/guia-remision',
+        loadComponent: () => import('./features/comprobantes/guia-remision-form/guia-remision-form.component').then((m) => m.GuiaRemisionFormComponent),
+        title: 'FactuEC - Nueva Guia de Remision'
+      },
+      {
         path: 'comprobantes/:id',
         loadComponent: () => import('./features/comprobantes/detail/comprobante-detail.component').then((m) => m.ComprobanteDetailComponent),
         title: 'FactuEC - Detalle Comprobante'
@@ -47,9 +52,19 @@ export const routes: Routes = [
         title: 'FactuEC - Clientes'
       },
       {
+        path: 'choferes',
+        loadComponent: () => import('./features/choferes/choferes.component').then((m) => m.ChoferesComponent),
+        title: 'FactuEC - Choferes'
+      },
+      {
         path: 'productos',
         loadComponent: () => import('./features/productos/productos.component').then((m) => m.ProductosComponent),
         title: 'FactuEC - Productos'
+      },
+      {
+        path: 'inventario',
+        loadComponent: () => import('./features/inventario/inventario.component').then((m) => m.InventarioComponent),
+        title: 'FactuEC - Inventario'
       },
       {
         path: 'empresa',
